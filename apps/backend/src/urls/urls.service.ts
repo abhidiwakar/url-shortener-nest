@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
+import type { ShortUrlResponse } from '@url-shortener/shared';
 import { Model, Types } from 'mongoose';
 import { RedisService } from '../redis/redis.service';
 import { CreateUrlDto } from './dto/create-url.dto';
@@ -14,13 +15,7 @@ import {
   type ShortIdGenerator,
 } from './short-id-generator';
 
-export interface ShortUrlResponse {
-  id: string;
-  fullUrl: string;
-  shortId: string;
-  isArchived: boolean;
-  archivedAt: string | null;
-}
+export type { ShortUrlResponse };
 
 interface DuplicateKeyError {
   code: number;

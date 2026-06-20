@@ -1,0 +1,12 @@
+node_modules
+.turbo
+dist
+coverage
+.env
+.env.*
+!.env.docker.example
+.git
+.gitignore
+**/*.md
+npm-debug.log
+**/.DS_Store

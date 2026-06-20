@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Req, Res } from '@nestjs/common';
+import type { RedirectJsonResponse } from '@url-shortener/shared';
 import type { Request, Response } from 'express';
 import { UrlsService } from './urls.service';
 
@@ -15,12 +16,13 @@ export class RedirectController {
     const shortUrl = await this.urlsService.resolve(shortId);
 
     if (this.prefersJson(request)) {
-      response.json({
+      const payload: RedirectJsonResponse = {
         shortId: shortUrl.shortId,
         fullUrl: shortUrl.fullUrl,
         isArchived: shortUrl.isArchived,
         archivedAt: shortUrl.archivedAt,
-      });
+      };
+      response.json(payload);
       return;
     }
 

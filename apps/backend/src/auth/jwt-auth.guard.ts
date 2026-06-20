@@ -4,8 +4,9 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import type { AuthenticatedUser } from '@url-shortener/shared';
 import { Request } from 'express';
-import { AuthenticatedUser, AuthService } from './auth.service';
+import { AuthService } from './auth.service';
 
 export interface AuthenticatedRequest extends Request {
   user: AuthenticatedUser;

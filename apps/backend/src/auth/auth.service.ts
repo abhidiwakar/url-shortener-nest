@@ -1,25 +1,18 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import type { AuthResponse, AuthenticatedUser } from '@url-shortener/shared';
 import * as bcrypt from 'bcryptjs';
 import type { SignOptions } from 'jsonwebtoken';
 import { UserDocument } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 
-export interface AuthenticatedUser {
-  id: string;
-  email: string;
-}
+export type { AuthenticatedUser, AuthResponse };
 
 export interface JwtPayload {
   sub: string;
   email: string;
-}
-
-export interface AuthResponse {
-  accessToken: string;
-  user: AuthenticatedUser;
 }
 
 @Injectable()

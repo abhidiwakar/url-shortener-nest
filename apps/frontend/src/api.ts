@@ -1,3 +1,10 @@
+import type {
+  AuthResponse,
+  AuthenticatedUser,
+  ShortUrlConflictErrorBody,
+  ShortUrlResponse,
+} from '@url-shortener/shared';
+
 function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 }
@@ -10,34 +17,15 @@ const PUBLIC_BASE_URL = normalizeBaseUrl(
     (API_BASE_URL === '/api' ? window.location.origin : API_BASE_URL),
 );
 
-export interface AuthUser {
-  id: string;
-  email: string;
-}
-
-export interface AuthResponse {
-  accessToken: string;
-  user: AuthUser;
-}
-
-export interface ShortLink {
-  id: string;
-  shortId: string;
-  fullUrl: string;
-  isArchived: boolean;
-  archivedAt: string | null;
-}
-
-interface ApiErrorBody {
-  message?: string | string[];
-  existingUrl?: ShortLink;
-}
+export type AuthUser = AuthenticatedUser;
+export type ShortLink = ShortUrlResponse;
+export type { AuthResponse, ShortUrlResponse };
 
 export class ApiError extends Error {
   readonly status: number;
-  readonly existingUrl?: ShortLink;
+  readonly existingUrl?: ShortUrlResponse;
 
-  constructor(message: string, status: number, existingUrl?: ShortLink) {
+  constructor(message: string, status: number, existingUrl?: ShortUrlResponse) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
@@ -47,21 +35,24 @@ export class ApiError extends Error {
 
 async function parseError(response: Response): Promise<ApiError> {
   try {
-    const body = (await response.json()) as ApiErrorBody;
+    const body = (await response.json()) as
+      | ShortUrlConflictErrorBody
+      | { message?: string | string[] };
+
     const message = body.message;
 
     if (Array.isArray(message)) {
       return new ApiError(
         message.join(', '),
         response.status,
-        body.existingUrl,
+        'existingUrl' in body ? body.existingUrl : undefined,
       );
     }
 
     return new ApiError(
       message ?? `Request failed with status ${response.status}`,
       response.status,
-      body.existingUrl,
+      'existingUrl' in body ? body.existingUrl : undefined,
     );
   } catch {
     return new ApiError(
@@ -121,8 +112,8 @@ export function register(
 export function getLinks(
   token: string,
   archived = false,
-): Promise<ShortLink[]> {
-  return request<ShortLink[]>(
+): Promise<ShortUrlResponse[]> {
+  return request<ShortUrlResponse[]>(
     `/urls${archived ? '?archived=true' : ''}`,
     {},
     token,
@@ -133,8 +124,8 @@ export function createLink(
   token: string,
   fullUrl: string,
   shortId?: string,
-): Promise<ShortLink> {
-  return request<ShortLink>(
+): Promise<ShortUrlResponse> {
+  return request<ShortUrlResponse>(
     '/urls',
     {
       method: 'POST',
@@ -150,8 +141,8 @@ export function createLink(
 export function archiveLink(
   token: string,
   shortId: string,
-): Promise<ShortLink> {
-  return request<ShortLink>(
+): Promise<ShortUrlResponse> {
+  return request<ShortUrlResponse>(
     `/urls/${shortId}/archive`,
     { method: 'PATCH' },
     token,
@@ -161,8 +152,8 @@ export function archiveLink(
 export function unarchiveLink(
   token: string,
   shortId: string,
-): Promise<ShortLink> {
-  return request<ShortLink>(
+): Promise<ShortUrlResponse> {
+  return request<ShortUrlResponse>(
     `/urls/${shortId}/unarchive`,
     { method: 'PATCH' },
     token,

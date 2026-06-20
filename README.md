@@ -4,6 +4,8 @@ Full-stack URL shortener with email/password auth, Cloudflare Turnstile verifica
 
 ## Stack
 
+- Monorepo: Turborepo with npm workspaces
+- Shared types: `@url-shortener/shared`
 - Backend: NestJS 11, TypeScript, MongoDB, Mongoose, JWT auth, Helmet, Nest throttling
 - Frontend: React 19, Vite, TypeScript, Material UI
 - Infrastructure: Docker Compose, Nginx, MongoDB, Redis
@@ -13,9 +15,13 @@ Full-stack URL shortener with email/password auth, Cloudflare Turnstile verifica
 
 ```txt
 .
-+-- backend/                 # NestJS API
-+-- frontend/                # React app served by Nginx in Docker
++-- apps/
+|   +-- backend/             # NestJS API (@url-shortener/backend)
+|   `-- frontend/            # React app served by Nginx in Docker
++-- packages/
+|   `-- shared/              # Shared API types (@url-shortener/shared)
 +-- docker-compose.yml       # Hosted stack: frontend, backend, MongoDB, Redis
++-- turbo.json               # Turborepo task pipeline
 +-- .env.docker.example      # Deployment env template
 `-- .github/workflows/       # Docker image publishing workflow
 ```
@@ -32,30 +38,34 @@ Full-stack URL shortener with email/password auth, Cloudflare Turnstile verifica
 - Return the existing short link on duplicate URL attempts.
 - Public short-link redirects from `/<shortId>`.
 - JSON response instead of redirect when `Accept` or `Content-Type` includes `application/json`.
+- Shared TypeScript contracts between backend and frontend via `@url-shortener/shared`.
 
 ## Local Development
 
 Start MongoDB and Redis. The backend-local compose file exposes MongoDB on `27017` and Redis on `8765`.
 
 ```bash
-cd backend
+cd apps/backend
 docker compose up -d
 ```
 
-Install and run the backend:
+Install dependencies from the repo root:
 
 ```bash
-cd backend
 npm install
-npm run start:dev
 ```
 
-Install and run the frontend:
+Run both apps in dev mode (builds shared types first):
 
 ```bash
-cd frontend
-npm install
 npm run dev
+```
+
+Or run individual workspaces:
+
+```bash
+npm run dev --workspace=@url-shortener/backend
+npm run dev --workspace=@url-shortener/frontend
 ```
 
 Default local URLs:
@@ -137,22 +147,28 @@ Backend secrets such as `JWT_SECRET` and `TURNSTILE_SECRET_KEY` are runtime conf
 
 ## Useful Commands
 
+Root (all workspaces):
+
+```bash
+npm run build
+npm run lint
+npm run test
+npm run test:e2e
+```
+
 Backend:
 
 ```bash
-cd backend
-npm run build
-npm test -- --watchman=false
-npm run test:e2e -- --watchman=false --runInBand
-npx eslint "{src,apps,libs,test}/**/*.ts"
+npm run build --workspace=@url-shortener/backend
+npm test --workspace=@url-shortener/backend -- --watchman=false
+npm run test:e2e --workspace=@url-shortener/backend -- --watchman=false --runInBand
 ```
 
 Frontend:
 
 ```bash
-cd frontend
-npm run lint
-npm run build
+npm run lint --workspace=@url-shortener/frontend
+npm run build --workspace=@url-shortener/frontend
 ```
 
 Docker:

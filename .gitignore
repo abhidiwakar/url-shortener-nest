@@ -1,2 +1,7 @@
 .env.docker
 docs
+node_modules
+.turbo
+dist
+coverage
+*.tsbuildinfo
