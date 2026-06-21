@@ -6,6 +6,10 @@ export interface ShortUrlResponse {
   archivedAt: string | null;
 }
 
+export interface IntegrationShortUrlResponse extends ShortUrlResponse {
+  shortUrl: string;
+}
+
 export interface CreateUrlRequest {
   fullUrl: string;
   shortId?: string;

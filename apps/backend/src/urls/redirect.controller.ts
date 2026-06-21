@@ -6,10 +6,12 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import type { RedirectJsonResponse } from '@url-shortener/shared';
 import type { Request, Response } from 'express';
 import { UrlsService } from './urls.service';
 
+@ApiExcludeController()
 @Controller()
 export class RedirectController {
   constructor(private readonly urlsService: UrlsService) {}

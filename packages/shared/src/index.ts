@@ -4,7 +4,12 @@ export type {
   AuthResponse,
 } from './auth';
 export type {
+  ApiKeySummary,
+  CreateApiKeyResponse,
+} from './api-keys';
+export type {
   CreateUrlRequest,
+  IntegrationShortUrlResponse,
   RedirectJsonResponse,
   ShortUrlConflictErrorBody,
   ShortUrlResponse,

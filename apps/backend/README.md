@@ -68,6 +68,8 @@ The API listens on `http://localhost:3000` by default.
 | `TURNSTILE_SECRET_KEY`        | Production | Cloudflare Turnstile secret key. Required when `NODE_ENV=production`.                              |
 | `TURNSTILE_SKIP_VERIFY`       | No         | Set to `true` only outside production to bypass Turnstile verification.                            |
 | `TRUST_PROXY`                 | No         | Express trust proxy setting. Use `1` behind the frontend Nginx container.                          |
+| `PUBLIC_BASE_URL`             | No         | Public origin used to build `shortUrl` values in the integration API.                               |
+| `SWAGGER_ENABLED`             | No         | Set to `false` to disable `/docs`. Enabled by default.                                              |
 
 ## API Overview
 
@@ -77,7 +79,23 @@ Auth:
 - `POST /auth/login`
 - `GET /auth/me`
 
-URL management, all authenticated with `Authorization: Bearer <token>`:
+API key management, authenticated with `Authorization: Bearer <token>`:
+
+- `POST /v1/api-keys`
+- `GET /v1/api-keys`
+- `DELETE /v1/api-keys/:apiKeyId`
+
+Integration API for third-party systems, authenticated with `Authorization: Bearer <apiKey>` or `X-API-Key: <apiKey>`:
+
+- `POST /v1/links`
+- `GET /v1/links`
+- `GET /v1/links?archived=true|false|all`
+- `PATCH /v1/links/:shortId/archive`
+- `PATCH /v1/links/:shortId/unarchive`
+
+Integration link responses include a ready-to-use `shortUrl` built from `PUBLIC_BASE_URL`.
+
+URL management for the web app, authenticated with `Authorization: Bearer <token>`:
 
 - `POST /urls`
 - `GET /urls`
@@ -113,6 +131,22 @@ The `ShortUrl` collection uses:
 - unique `{ ownerId: 1, fullUrl: 1 }`
 
 Before deploying the unique `{ ownerId, fullUrl }` index to an existing database, clean any duplicate rows for the same owner and full URL.
+
+## API Documentation
+
+The **third-party integration API** OpenAPI spec is generated from NestJS Swagger decorators. Internal web-app endpoints (`/auth`, `/urls`, `/v1/api-keys`) are not included.
+
+**Developer portal (recommended):** the frontend serves Scalar-powered docs at `/developers`, styled for Linkable and fed from the live OpenAPI spec.
+
+**Swagger UI (legacy):** still available at `/docs` for quick try-it-out when the backend is running.
+
+Local examples:
+
+- Developer portal: `http://localhost:5173/developers` (dev) or `http://localhost:8080/developers` (Docker)
+- OpenAPI JSON: `http://localhost:3000/docs-json` or `http://localhost:8080/api/docs-json`
+- Swagger UI: `http://localhost:3000/docs` or `http://localhost:8080/api/docs`
+
+Set `SWAGGER_ENABLED=false` to disable the OpenAPI/Swagger endpoints in production if needed.
 
 ## Commands
 

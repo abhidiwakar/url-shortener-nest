@@ -17,5 +17,6 @@ import { UrlsService } from './urls.service';
   ],
   controllers: [UrlsController, RedirectController],
   providers: [UrlsService],
+  exports: [UrlsService],
 })
 export class UrlsModule {}

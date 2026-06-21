@@ -2,15 +2,12 @@ import AddIcon from '@mui/icons-material/Add';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LinkIcon from '@mui/icons-material/Link';
-import LogoutIcon from '@mui/icons-material/Logout';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import {
   Alert,
-  AppBar,
   Box,
   Button,
   CircularProgress,
-  Container,
   CssBaseline,
   Dialog,
   DialogActions,
@@ -30,11 +27,10 @@ import {
   TableRow,
   TextField,
   ThemeProvider,
-  Toolbar,
   Typography,
   createTheme,
 } from '@mui/material';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import type { FormEvent, ReactElement } from 'react';
 import {
   Link as RouterLink,
@@ -55,8 +51,16 @@ import {
   unarchiveLink,
 } from './api';
 import type { ShortLink } from './api';
-import { clearAuth, getToken, getUser, saveAuth } from './auth';
+import { getToken, saveAuth } from './auth';
+import { AuthenticatedShell } from './components/AuthenticatedShell';
+import { ApiKeysPage } from './pages/ApiKeysPage';
 import './App.css';
+
+const DevelopersPage = lazy(() =>
+  import('./pages/DevelopersPage').then((module) => ({
+    default: module.DevelopersPage,
+  })),
+);
 
 const PRODUCT_NAME = 'Linkable';
 const TURNSTILE_SCRIPT_URL =
@@ -353,6 +357,13 @@ function AuthLayout({ mode }: { mode: 'login' | 'register' }) {
               {isLogin ? 'Create one' : 'Login'}
             </Button>
           </Typography>
+
+          <Typography color="text.secondary" sx={{ textAlign: 'center' }}>
+            Building an integration?{' '}
+            <Button component={RouterLink} size="small" to="/developers">
+              View API docs
+            </Button>
+          </Typography>
         </Stack>
       </Paper>
     </Box>
@@ -360,9 +371,7 @@ function AuthLayout({ mode }: { mode: 'login' | 'register' }) {
 }
 
 function MyLinksPage() {
-  const navigate = useNavigate();
   const token = getToken();
-  const user = getUser();
   const [links, setLinks] = useState<ShortLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -422,11 +431,6 @@ function MyLinksPage() {
       ? `${links.length} archived links`
       : `${links.length} active links`;
   }, [isArchivedView, links.length]);
-
-  function handleLogout() {
-    clearAuth();
-    navigate('/login', { replace: true });
-  }
 
   function openCreateDialog() {
     setDuplicateLink(null);
@@ -527,34 +531,8 @@ function MyLinksPage() {
   }
 
   return (
-    <Box className="app-shell">
-      <AppBar elevation={0} position="sticky" color="inherit">
-        <Toolbar className="toolbar">
-          <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
-            <Box className="brand-mark">
-              <LinkIcon fontSize="small" />
-            </Box>
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                {PRODUCT_NAME}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {user?.email}
-              </Typography>
-            </Box>
-          </Stack>
-          <Button
-            color="inherit"
-            onClick={handleLogout}
-            startIcon={<LogoutIcon />}
-          >
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth="lg" className="content">
-        <Stack spacing={3}>
+    <AuthenticatedShell>
+      <Stack spacing={3}>
           <Paper className="dashboard-header" elevation={0}>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
@@ -678,7 +656,6 @@ function MyLinksPage() {
             )}
           </Paper>
         </Stack>
-      </Container>
 
       <Dialog
         fullWidth
@@ -758,7 +735,7 @@ function MyLinksPage() {
         open={Boolean(toast)}
         message={toast}
       />
-    </Box>
+    </AuthenticatedShell>
   );
 }
 
@@ -821,6 +798,31 @@ function App() {
             <ProtectedRoute>
               <MyLinksPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/api-keys"
+          element={
+            <ProtectedRoute>
+              <ApiKeysPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/developers"
+          element={
+            <Suspense
+              fallback={
+                <Box className="state-panel" sx={{ minHeight: '100svh' }}>
+                  <CircularProgress size={28} />
+                  <Typography color="text.secondary">
+                    Loading developer docs...
+                  </Typography>
+                </Box>
+              }
+            >
+              <DevelopersPage />
+            </Suspense>
           }
         />
         <Route path="/not-found" element={<NotFoundPage />} />

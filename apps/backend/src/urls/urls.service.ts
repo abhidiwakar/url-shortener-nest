@@ -5,7 +5,10 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
-import type { ShortUrlResponse } from '@url-shortener/shared';
+import type {
+  IntegrationShortUrlResponse,
+  ShortUrlResponse,
+} from '@url-shortener/shared';
 import { Model, Types } from 'mongoose';
 import { RedisService } from '../redis/redis.service';
 import { CreateUrlDto } from './dto/create-url.dto';
@@ -15,7 +18,7 @@ import {
   type ShortIdGenerator,
 } from './short-id-generator';
 
-export type { ShortUrlResponse };
+export type { ShortUrlResponse, IntegrationShortUrlResponse };
 
 interface DuplicateKeyError {
   code: number;
@@ -29,6 +32,7 @@ export class UrlsService {
   private readonly generatedShortIdLength = 10;
   private readonly shortUrlCacheKeyPrefix = 'short-url';
   private readonly shortUrlCacheTtlSeconds: number;
+  private readonly publicBaseUrl: string;
   private shortIdGenerator?: ShortIdGenerator;
   private shortIdGeneratorPromise?: Promise<ShortIdGenerator>;
 
@@ -41,6 +45,44 @@ export class UrlsService {
     this.shortUrlCacheTtlSeconds =
       Number(configService.get<string>('SHORT_URL_CACHE_TTL_SECONDS')) ||
       43_200;
+    this.publicBaseUrl =
+      configService.get<string>('PUBLIC_BASE_URL')?.replace(/\/$/, '') ?? '';
+  }
+
+  async createIntegrationLink(
+    ownerId: string,
+    createUrlDto: CreateUrlDto,
+  ): Promise<IntegrationShortUrlResponse> {
+    const shortUrl = await this.create(ownerId, createUrlDto);
+
+    return this.toIntegrationResponse(shortUrl);
+  }
+
+  async findAllIntegrationLinksForUser(
+    ownerId: string,
+    archived: boolean | 'all' = 'all',
+  ): Promise<IntegrationShortUrlResponse[]> {
+    const shortUrls = await this.findAllForUser(ownerId, archived);
+
+    return shortUrls.map((shortUrl) => this.toIntegrationResponse(shortUrl));
+  }
+
+  async archiveIntegrationLinkForUser(
+    ownerId: string,
+    shortId: string,
+  ): Promise<IntegrationShortUrlResponse> {
+    const shortUrl = await this.archiveForUser(ownerId, shortId);
+
+    return this.toIntegrationResponse(shortUrl);
+  }
+
+  async unarchiveIntegrationLinkForUser(
+    ownerId: string,
+    shortId: string,
+  ): Promise<IntegrationShortUrlResponse> {
+    const shortUrl = await this.unarchiveForUser(ownerId, shortId);
+
+    return this.toIntegrationResponse(shortUrl);
   }
 
   async create(
@@ -73,13 +115,25 @@ export class UrlsService {
 
   async findAllForUser(
     ownerId: string,
-    archived = false,
+    archived: boolean | 'all' = false,
   ): Promise<ShortUrlResponse[]> {
+    const query: {
+      ownerId: Types.ObjectId;
+      archivedAt?: null | { $ne: null };
+    } = {
+      ownerId: new Types.ObjectId(ownerId),
+    };
+
+    if (archived === 'all') {
+      // Return active and archived links.
+    } else if (archived) {
+      query.archivedAt = { $ne: null };
+    } else {
+      query.archivedAt = null;
+    }
+
     const urls = await this.shortUrlModel
-      .find({
-        ownerId: new Types.ObjectId(ownerId),
-        archivedAt: archived ? { $ne: null } : null,
-      })
+      .find(query)
       .sort({ createdAt: -1 })
       .exec();
 
@@ -252,6 +306,23 @@ export class UrlsService {
       isArchived: Boolean(shortUrl.archivedAt),
       archivedAt: shortUrl.archivedAt?.toISOString() ?? null,
     };
+  }
+
+  private toIntegrationResponse(
+    shortUrl: ShortUrlResponse,
+  ): IntegrationShortUrlResponse {
+    return {
+      ...shortUrl,
+      shortUrl: this.buildPublicShortUrl(shortUrl.shortId),
+    };
+  }
+
+  private buildPublicShortUrl(shortId: string): string {
+    if (this.publicBaseUrl) {
+      return `${this.publicBaseUrl}/${shortId}`;
+    }
+
+    return `/${shortId}`;
   }
 
   private isDuplicateKeyError(error: unknown): error is DuplicateKeyError {

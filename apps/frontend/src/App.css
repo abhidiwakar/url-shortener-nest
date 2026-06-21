@@ -74,6 +74,27 @@
   max-width: 460px;
 }
 
+.developers-shell {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: #f6f8fb;
+}
+
+.developers-toolbar {
+  min-height: 64px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #dce3ec;
+}
+
+.developers-reference {
+  flex: 1;
+  min-height: 0;
+  height: calc(100svh - 64px);
+}
+
 .turnstile-box {
   min-height: 65px;
   display: flex;

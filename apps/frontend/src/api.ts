@@ -1,6 +1,8 @@
 import type {
+  ApiKeySummary,
   AuthResponse,
   AuthenticatedUser,
+  CreateApiKeyResponse,
   ShortUrlConflictErrorBody,
   ShortUrlResponse,
 } from '@url-shortener/shared';
@@ -19,7 +21,8 @@ const PUBLIC_BASE_URL = normalizeBaseUrl(
 
 export type AuthUser = AuthenticatedUser;
 export type ShortLink = ShortUrlResponse;
-export type { AuthResponse, ShortUrlResponse };
+export type ApiKey = ApiKeySummary;
+export type { AuthResponse, ShortUrlResponse, CreateApiKeyResponse };
 
 export class ApiError extends Error {
   readonly status: number;
@@ -162,4 +165,35 @@ export function unarchiveLink(
 
 export function getShortUrl(shortId: string): string {
   return `${PUBLIC_BASE_URL}/${shortId}`;
+}
+
+export function getApiKeys(token: string): Promise<ApiKeySummary[]> {
+  return request<ApiKeySummary[]>('/v1/api-keys', {}, token);
+}
+
+export function createApiKey(
+  token: string,
+  name?: string,
+): Promise<CreateApiKeyResponse> {
+  return request<CreateApiKeyResponse>(
+    '/v1/api-keys',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        name: name?.trim() || undefined,
+      }),
+    },
+    token,
+  );
+}
+
+export function revokeApiKey(
+  token: string,
+  apiKeyId: string,
+): Promise<ApiKeySummary> {
+  return request<ApiKeySummary>(
+    `/v1/api-keys/${apiKeyId}`,
+    { method: 'DELETE' },
+    token,
+  );
 }

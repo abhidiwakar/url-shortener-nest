@@ -10,17 +10,40 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { AuthenticatedRequest } from '../auth/jwt-auth.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import {
+  ShortUrlConflictErrorDto,
+  ShortUrlResponseDto,
+} from '../swagger/dto/short-url-response.dto';
 import { CreateUrlDto } from './dto/create-url.dto';
 import { ShortUrlResponse, UrlsService } from './urls.service';
 
+@ApiTags('Links')
+@ApiBearerAuth('access-token')
 @Controller('urls')
 @UseGuards(JwtAuthGuard)
 export class UrlsController {
   constructor(private readonly urlsService: UrlsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a short link' })
+  @ApiCreatedResponse({ type: ShortUrlResponseDto })
+  @ApiResponse({
+    status: 409,
+    description: 'The URL or custom short code already exists for this account.',
+    type: ShortUrlConflictErrorDto,
+  })
   create(
     @Req() request: AuthenticatedRequest,
     @Body() createUrlDto: CreateUrlDto,
@@ -29,6 +52,14 @@ export class UrlsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'List short links' })
+  @ApiQuery({
+    name: 'archived',
+    required: false,
+    enum: ['true'],
+    description: 'Pass `true` to list archived links. Defaults to active links.',
+  })
+  @ApiOkResponse({ type: ShortUrlResponseDto, isArray: true })
   findAll(
     @Req() request: AuthenticatedRequest,
     @Query('archived') archived?: string,
@@ -40,6 +71,9 @@ export class UrlsController {
   }
 
   @Get(':shortId')
+  @ApiOperation({ summary: 'Get one short link' })
+  @ApiParam({ name: 'shortId', example: 'launch-notes' })
+  @ApiOkResponse({ type: ShortUrlResponseDto })
   findOne(
     @Req() request: AuthenticatedRequest,
     @Param('shortId') shortId: string,
@@ -48,6 +82,9 @@ export class UrlsController {
   }
 
   @Delete(':shortId')
+  @ApiOperation({ summary: 'Delete a short link' })
+  @ApiParam({ name: 'shortId', example: 'launch-notes' })
+  @ApiOkResponse({ type: ShortUrlResponseDto })
   remove(
     @Req() request: AuthenticatedRequest,
     @Param('shortId') shortId: string,
@@ -56,6 +93,9 @@ export class UrlsController {
   }
 
   @Patch(':shortId/archive')
+  @ApiOperation({ summary: 'Archive a short link' })
+  @ApiParam({ name: 'shortId', example: 'launch-notes' })
+  @ApiOkResponse({ type: ShortUrlResponseDto })
   archive(
     @Req() request: AuthenticatedRequest,
     @Param('shortId') shortId: string,
@@ -64,6 +104,9 @@ export class UrlsController {
   }
 
   @Patch(':shortId/unarchive')
+  @ApiOperation({ summary: 'Restore an archived short link' })
+  @ApiParam({ name: 'shortId', example: 'launch-notes' })
+  @ApiOkResponse({ type: ShortUrlResponseDto })
   unarchive(
     @Req() request: AuthenticatedRequest,
     @Param('shortId') shortId: string,

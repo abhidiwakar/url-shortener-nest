@@ -28,6 +28,19 @@ interface DuplicateUrlResponseBody {
   existingUrl: ShortUrlResponseBody;
 }
 
+interface IntegrationShortUrlResponseBody extends ShortUrlResponseBody {
+  shortUrl: string;
+}
+
+interface CreateApiKeyResponseBody {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  apiKey: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
 const turnstileToken = 'XXXX.DUMMY.TOKEN.XXXX';
 
 describe('AppController (e2e)', () => {
@@ -39,6 +52,7 @@ describe('AppController (e2e)', () => {
     previousMongoUri = process.env.MONGODB_URI;
     process.env.MONGODB_URI = `mongodb://localhost:27017/url-shortener-e2e-${process.pid}`;
     process.env.TURNSTILE_SKIP_VERIFY = 'true';
+    process.env.PUBLIC_BASE_URL = 'https://linkable.test';
   });
 
   beforeEach(async () => {
@@ -63,6 +77,7 @@ describe('AppController (e2e)', () => {
 
   afterAll(() => {
     delete process.env.TURNSTILE_SKIP_VERIFY;
+    delete process.env.PUBLIC_BASE_URL;
     if (previousMongoUri === undefined) {
       delete process.env.MONGODB_URI;
     } else {
@@ -202,6 +217,97 @@ describe('AppController (e2e)', () => {
         message: 'You have already shortened this URL',
         existingUrl: createdUrl,
       });
+    });
+  });
+
+  describe('integrations', () => {
+    const password = 'secret123';
+    let accessToken: string;
+    let apiKey: string;
+    let email: string;
+
+    beforeEach(async () => {
+      email = `integration-user-${Date.now()}-${Math.random().toString(16).slice(2)}@example.com`;
+
+      const signupResponse = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({ email, password, turnstileToken })
+        .expect(201);
+      const signupBody = signupResponse.body as unknown as AuthResponseBody;
+
+      accessToken = signupBody.accessToken;
+
+      const apiKeyResponse = await request(app.getHttpServer())
+        .post('/v1/api-keys')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ name: 'Integration test key' })
+        .expect(201);
+      const apiKeyBody =
+        apiKeyResponse.body as unknown as CreateApiKeyResponseBody;
+
+      apiKey = apiKeyBody.apiKey;
+    });
+
+    it('creates, lists, archives, and unarchives links via API key auth', async () => {
+      const fullUrl = `https://example.com/${Date.now()}/integration`;
+
+      const createResponse = await request(app.getHttpServer())
+        .post('/v1/links')
+        .set('X-API-Key', apiKey)
+        .send({ fullUrl, shortId: 'launch-notes' })
+        .expect(201);
+      const createdLink =
+        createResponse.body as unknown as IntegrationShortUrlResponseBody;
+
+      expect(createdLink).toMatchObject({
+        fullUrl,
+        shortId: 'launch-notes',
+        shortUrl: 'https://linkable.test/launch-notes',
+        isArchived: false,
+      });
+
+      const listResponse = await request(app.getHttpServer())
+        .get('/v1/links')
+        .set('Authorization', `Bearer ${apiKey}`)
+        .expect(200);
+      const links = listResponse.body as unknown as IntegrationShortUrlResponseBody[];
+
+      expect(links).toHaveLength(1);
+      expect(links[0]?.id).toBe(createdLink.id);
+
+      await request(app.getHttpServer())
+        .patch('/v1/links/launch-notes/archive')
+        .set('X-API-Key', apiKey)
+        .expect(200);
+
+      const archivedListResponse = await request(app.getHttpServer())
+        .get('/v1/links?archived=true')
+        .set('X-API-Key', apiKey)
+        .expect(200);
+      const archivedLinks =
+        archivedListResponse.body as unknown as IntegrationShortUrlResponseBody[];
+
+      expect(archivedLinks).toHaveLength(1);
+      expect(archivedLinks[0]?.isArchived).toBe(true);
+
+      await request(app.getHttpServer())
+        .patch('/v1/links/launch-notes/unarchive')
+        .set('X-API-Key', apiKey)
+        .expect(200);
+
+      const activeListResponse = await request(app.getHttpServer())
+        .get('/v1/links?archived=false')
+        .set('X-API-Key', apiKey)
+        .expect(200);
+      const activeLinks =
+        activeListResponse.body as unknown as IntegrationShortUrlResponseBody[];
+
+      expect(activeLinks).toHaveLength(1);
+      expect(activeLinks[0]?.isArchived).toBe(false);
+    });
+
+    it('rejects integration requests without an API key', async () => {
+      await request(app.getHttpServer()).get('/v1/links').expect(401);
     });
   });
 });
