@@ -52,7 +52,7 @@ describe('AppController (e2e)', () => {
     previousMongoUri = process.env.MONGODB_URI;
     process.env.MONGODB_URI = `mongodb://localhost:27017/url-shortener-e2e-${process.pid}`;
     process.env.TURNSTILE_SKIP_VERIFY = 'true';
-    process.env.PUBLIC_BASE_URL = 'https://linkable.test';
+    process.env.PUBLIC_BASE_URL = 'https://moklay.test';
   });
 
   beforeEach(async () => {
@@ -89,7 +89,42 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/')
       .expect(200)
-      .expect('Hello World!');
+      .expect('Content-Type', /text\/html/)
+      .expect(/moklay — Managed URL shortener/)
+      .expect(/Short links your team can trust and manage/)
+      .expect(/class="brand-mark"/)
+      .expect(/#1769aa/)
+      .expect(/rel="icon" type="image\/svg\+xml" href="data:image\/svg\+xml,/)
+      .expect(/id="hero-shorten-form"/)
+      .expect(/Shorten a URL/);
+  });
+
+  it('/robots.txt (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/robots.txt')
+      .expect(200)
+      .expect('Content-Type', /text\/plain/)
+      .expect(/Sitemap: https:\/\/moklay\.test\/sitemap\.xml/);
+  });
+
+  it('/sitemap.xml (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/sitemap.xml')
+      .expect(200)
+      .expect('Content-Type', /application\/xml/)
+      .expect(/<loc>https:\/\/moklay\.test<\/loc>/);
+  });
+
+  it('/logo.svg (GET)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/logo.svg')
+      .buffer(true)
+      .expect(200)
+      .expect('Content-Type', /image\/svg\+xml/);
+
+    const body = response.body.toString('utf8');
+    expect(body).toContain('<svg');
+    expect(body).toContain('#1769aa');
   });
 
   describe('auth', () => {
@@ -298,7 +333,7 @@ describe('AppController (e2e)', () => {
       expect(createdLink).toMatchObject({
         fullUrl,
         shortId: 'launch-notes',
-        shortUrl: 'https://linkable.test/launch-notes',
+        shortUrl: 'https://moklay.test/launch-notes',
         isArchived: false,
       });
 

@@ -38,6 +38,7 @@ import {
   Routes,
   useLocation,
   useNavigate,
+  useSearchParams,
 } from 'react-router-dom';
 import {
   archiveLink,
@@ -52,12 +53,19 @@ import {
 import type { ShortLink } from './api';
 import { getToken, saveAuth } from './auth';
 import { AuthenticatedShell } from './components/AuthenticatedShell';
+import { BrandMark } from './components/BrandMark';
 import { EmptyState } from './components/EmptyState';
 import { PageHeader } from './components/PageHeader';
 import { ApiKeysPage } from './pages/ApiKeysPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { theme } from './theme';
 import { PRODUCT_NAME } from './constants/product';
+import {
+  buildUrlWithPendingParam,
+  clearPendingUrl,
+  normalizePendingUrl,
+  PENDING_URL_QUERY_PARAM,
+} from './lib/pending-url';
 import './App.css';
 
 const DevelopersPage = lazy(() =>
@@ -179,15 +187,28 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
   const location = useLocation();
 
   if (!getToken()) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return (
+      <Navigate
+        to={{ pathname: '/login', search: location.search }}
+        replace
+        state={{ from: location }}
+      />
+    );
   }
 
   return children;
 }
 
 function PublicOnlyRoute({ children }: { children: ReactElement }) {
+  const location = useLocation();
+
   if (getToken()) {
-    return <Navigate to="/my-links" replace />;
+    return (
+      <Navigate
+        to={{ pathname: '/my-links', search: location.search }}
+        replace
+      />
+    );
   }
 
   return children;
@@ -199,6 +220,8 @@ function RootRedirect() {
 
 function AuthLayout({ mode }: { mode: 'login' | 'register' }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -206,6 +229,7 @@ function AuthLayout({ mode }: { mode: 'login' | 'register' }) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isLogin = mode === 'login';
+  const pendingUrl = normalizePendingUrl(searchParams.get(PENDING_URL_QUERY_PARAM) ?? '');
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -217,7 +241,12 @@ function AuthLayout({ mode }: { mode: 'login' | 'register' }) {
         ? await login(email, password, turnstileToken ?? '')
         : await register(email, password, turnstileToken ?? '');
       saveAuth(auth);
-      navigate('/my-links', { replace: true });
+      navigate(
+        pendingUrl
+          ? buildUrlWithPendingParam('/my-links', pendingUrl)
+          : '/my-links',
+        { replace: true },
+      );
     } catch (caughtError) {
       setTurnstileToken(null);
       setTurnstileResetKey((currentKey) => currentKey + 1);
@@ -236,9 +265,7 @@ function AuthLayout({ mode }: { mode: 'login' | 'register' }) {
       <Box className="auth-showcase">
         <Stack spacing={2.5} sx={{ maxWidth: 480 }}>
           <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
-            <Box className="brand-mark">
-              <LinkIcon fontSize="small" />
-            </Box>
+            <BrandMark />
             <Typography sx={{ fontWeight: 800, letterSpacing: '0.06em' }}>
               {PRODUCT_NAME}
             </Typography>
@@ -270,6 +297,12 @@ function AuthLayout({ mode }: { mode: 'login' | 'register' }) {
             </Stack>
 
             {error ? <Alert severity="error">{error}</Alert> : null}
+
+            {pendingUrl ? (
+              <Alert severity="info">
+                Please sign in or register to continue
+              </Alert>
+            ) : null}
 
             <Box component="form" onSubmit={handleSubmit}>
               <Stack spacing={2.25}>
@@ -314,7 +347,10 @@ function AuthLayout({ mode }: { mode: 'login' | 'register' }) {
               <Button
                 component={RouterLink}
                 size="small"
-                to={isLogin ? '/register' : '/login'}
+                to={{
+                  pathname: isLogin ? '/register' : '/login',
+                  search: location.search,
+                }}
               >
                 {isLogin ? 'Create one' : 'Sign in'}
               </Button>
@@ -335,6 +371,9 @@ function AuthLayout({ mode }: { mode: 'login' | 'register' }) {
 
 function MyLinksPage() {
   const token = getToken();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pendingQueryUrl = searchParams.get(PENDING_URL_QUERY_PARAM);
+  const consumedPendingRef = useRef<string | null>(null);
   const [links, setLinks] = useState<ShortLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -347,18 +386,19 @@ function MyLinksPage() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    const authToken = token;
     let mounted = true;
 
     async function loadLinks() {
-      if (!token) {
-        return;
-      }
-
       setIsLoading(true);
       setError(null);
 
       try {
-        const nextLinks = await getLinks(token, isArchivedView);
+        const nextLinks = await getLinks(authToken, isArchivedView);
 
         if (mounted) {
           setLinks(nextLinks);
@@ -384,6 +424,31 @@ function MyLinksPage() {
       mounted = false;
     };
   }, [isArchivedView, token]);
+
+  useEffect(() => {
+    if (!token || !pendingQueryUrl) {
+      return;
+    }
+
+    if (consumedPendingRef.current === pendingQueryUrl) {
+      return;
+    }
+
+    consumedPendingRef.current = pendingQueryUrl;
+    clearPendingUrl();
+    setSearchParams({}, { replace: true });
+
+    const pendingUrl = normalizePendingUrl(pendingQueryUrl);
+
+    if (!pendingUrl) {
+      return;
+    }
+
+    setDuplicateLink(null);
+    setError(null);
+    setFullUrl(pendingUrl);
+    setDialogOpen(true);
+  }, [pendingQueryUrl, setSearchParams, token]);
 
   const linkCountLabel = useMemo(() => {
     if (links.length === 1) {
@@ -706,9 +771,7 @@ function NotFoundPage() {
       <Box className="auth-panel-wrap" sx={{ gridColumn: '1 / -1' }}>
         <Paper className="auth-panel" elevation={0}>
           <Stack spacing={3} sx={{ alignItems: 'center', textAlign: 'center' }}>
-            <Box className="brand-mark">
-              <LinkIcon fontSize="small" />
-            </Box>
+            <BrandMark />
             <Typography variant="overline" color="text.secondary">
               {PRODUCT_NAME}
             </Typography>

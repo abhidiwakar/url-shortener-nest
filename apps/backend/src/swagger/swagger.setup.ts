@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { IntegrationsModule } from '../integrations/integrations.module';
+import { PRODUCT_NAME } from '../landing/landing.constants';
 import {
   getPublicBaseUrl,
   buildIntegrationShortUrlExample,
@@ -16,11 +17,11 @@ export function setupSwagger(app: INestApplication): void {
   const shortUrlExample = buildIntegrationShortUrlExample(publicBaseUrl);
 
   const config = new DocumentBuilder()
-    .setTitle('Linkable Integration API')
+    .setTitle(`${PRODUCT_NAME} Integration API`)
     .setDescription(
-      'Public API for third-party systems to shorten URLs and manage links in Linkable.\n\n' +
+      `Public API for third-party systems to shorten URLs and manage links in ${PRODUCT_NAME}.\n\n` +
         'Authenticate with an API key via `X-API-Key` or `Authorization: Bearer <api-key>`. ' +
-        'API keys are created and revoked from the Linkable web app — they are not managed through this API.\n\n' +
+        `API keys are created and revoked from the ${PRODUCT_NAME} web app — they are not managed through this API.\n\n` +
         `**Short link base URL:** \`${publicBaseUrl}\` (from \`PUBLIC_BASE_URL\`). ` +
         `Example response \`shortUrl\`: \`${shortUrlExample}\`.`,
     )
@@ -30,7 +31,7 @@ export function setupSwagger(app: INestApplication): void {
         type: 'apiKey',
         in: 'header',
         name: 'X-API-Key',
-        description: 'Integration API key issued from the Linkable web app.',
+        description: `Integration API key issued from the ${PRODUCT_NAME} web app.`,
       },
       'api-key',
     )
@@ -47,7 +48,7 @@ export function setupSwagger(app: INestApplication): void {
   );
 
   SwaggerModule.setup('docs', app, document, {
-    customSiteTitle: 'Linkable Integration API',
+    customSiteTitle: `${PRODUCT_NAME} Integration API`,
     swaggerOptions: {
       persistAuthorization: true,
       tagsSorter: 'alpha',

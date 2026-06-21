@@ -3,10 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { LandingModule } from './landing/landing.module';
 import { UrlsModule } from './urls/urls.module';
 import { UsersModule } from './users/users.module';
 
@@ -38,14 +37,13 @@ import { UsersModule } from './users/users.module';
         };
       },
     }),
+    LandingModule,
     UsersModule,
     AuthModule,
     UrlsModule,
     IntegrationsModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

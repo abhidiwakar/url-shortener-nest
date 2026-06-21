@@ -1,6 +1,6 @@
 # Backend
 
-NestJS API for Linkable. It handles authentication, Turnstile verification, user-owned short links, duplicate URL detection, redirects, and archive state.
+NestJS API for moklay. It handles authentication, Turnstile verification, user-owned short links, duplicate URL detection, redirects, and archive state.
 
 ## Stack
 
@@ -136,7 +136,7 @@ Before deploying the unique `{ ownerId, fullUrl }` index to an existing database
 
 The **third-party integration API** OpenAPI spec is generated from NestJS Swagger decorators. Internal web-app endpoints (`/auth`, `/urls`, `/v1/api-keys`) are not included.
 
-**Developer portal (recommended):** the frontend serves Scalar-powered docs at `/developers`, styled for Linkable and fed from the live OpenAPI spec.
+**Developer portal (recommended):** the frontend serves Scalar-powered docs at `/developers`, styled for moklay and fed from the live OpenAPI spec.
 
 **Swagger UI (legacy):** still available at `/docs` for quick try-it-out when the backend is running.
 

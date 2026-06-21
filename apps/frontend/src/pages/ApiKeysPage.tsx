@@ -33,6 +33,7 @@ import { AuthenticatedShell } from '../components/AuthenticatedShell';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { getToken } from '../auth';
+import { PRODUCT_NAME } from '../constants/product';
 
 function formatTimestamp(value: string | null): string {
   if (!value) {
@@ -183,7 +184,7 @@ export function ApiKeysPage() {
             Create API key
           </Button>
         }
-        description="Create keys for third-party integrations. Keys can access the public Linkable API only."
+        description={`Create keys for third-party integrations. Keys can access the public ${PRODUCT_NAME} API only.`}
         title="API keys"
       />
 
@@ -222,7 +223,7 @@ export function ApiKeysPage() {
                 Create API key
               </Button>
             }
-            description="Create a key to connect external systems to Linkable."
+            description={`Create a key to connect external systems to ${PRODUCT_NAME}.`}
             icon={<KeyIcon />}
             title="No API keys yet"
           />

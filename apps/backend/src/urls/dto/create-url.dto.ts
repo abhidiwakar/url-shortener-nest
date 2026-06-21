@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
-  IsEmail,
   IsOptional,
   IsString,
   IsUrl,
@@ -8,11 +8,19 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { normalizeFullUrl } from '@url-shortener/shared';
 
 export class CreateUrlDto {
   @ApiProperty({
     example: 'https://example.com/article',
     maxLength: 2048,
+  })
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    return normalizeFullUrl(value) ?? value.trim();
   })
   @IsUrl({ require_protocol: true })
   @MaxLength(2048)

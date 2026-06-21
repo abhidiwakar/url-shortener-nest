@@ -22,6 +22,11 @@ export class RedirectController {
     @Req() request: Request,
     @Res() response: Response,
   ): Promise<void> {
+    if (this.isReservedSlug(shortId)) {
+      response.status(404).send('Not Found');
+      return;
+    }
+
     let shortUrl;
 
     try {
@@ -55,6 +60,14 @@ export class RedirectController {
     }
 
     response.redirect(302, shortUrl.fullUrl);
+  }
+
+  private isReservedSlug(shortId: string): boolean {
+    if (shortId === 'not-found') {
+      return true;
+    }
+
+    return shortId.includes('.');
   }
 
   private prefersJson(request: Request): boolean {

@@ -24,6 +24,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { clearAuth, getUser } from '../auth';
+import { BrandMark } from './BrandMark';
 import { PRODUCT_NAME, PRODUCT_TAGLINE } from '../constants/product';
 
 const NAV_ITEMS = [
@@ -155,9 +156,7 @@ export function AuthenticatedShell({
   const sidebar = (
     <Stack className="sidebar-inner" spacing={0}>
       <Stack className="sidebar-brand" direction="row" spacing={1.25}>
-        <Box className="brand-mark">
-          <LinkIcon fontSize="small" />
-        </Box>
+        <BrandMark />
         <Box sx={{ minWidth: 0 }}>
           <Typography noWrap sx={{ fontWeight: 800, lineHeight: 1.2 }}>
             {PRODUCT_NAME}

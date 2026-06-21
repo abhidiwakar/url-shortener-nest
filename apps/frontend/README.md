@@ -1,6 +1,6 @@
 # Frontend
 
-React application for Linkable — register, log in, create short links, copy links, and manage active or archived links.
+React application for moklay — register, log in, create short links, copy links, and manage active or archived links.
 
 ## Stack
 

@@ -15,6 +15,7 @@ import { getProfile, updateProfile } from '../api';
 import { AuthenticatedShell } from '../components/AuthenticatedShell';
 import { PageHeader } from '../components/PageHeader';
 import { getToken, saveUser, getUser } from '../auth';
+import { PRODUCT_NAME } from '../constants/product';
 
 export function ProfilePage() {
   const token = getToken();
@@ -97,7 +98,7 @@ export function ProfilePage() {
   return (
     <AuthenticatedShell>
       <PageHeader
-        description="Update how your name appears in Linkable. Your email address cannot be changed."
+        description={`Update how your name appears in ${PRODUCT_NAME}. Your email address cannot be changed.`}
         title="Profile"
       />
 

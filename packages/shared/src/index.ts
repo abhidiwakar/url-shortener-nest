@@ -15,3 +15,8 @@ export type {
   ShortUrlConflictErrorBody,
   ShortUrlResponse,
 } from './urls';
+export {
+  FULL_URL_MAX_LENGTH,
+  isValidFullUrl,
+  normalizeFullUrl,
+} from './url-validation';

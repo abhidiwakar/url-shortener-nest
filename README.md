@@ -1,6 +1,6 @@
-# Linkable
+# moklay
 
-Linkable is a full-stack URL shortener with email/password auth, Cloudflare Turnstile verification, user-owned links, archive support, duplicate URL detection, and a Docker/Nginx hosting setup.
+moklay is a full-stack URL shortener with email/password auth, Cloudflare Turnstile verification, user-owned links, archive support, duplicate URL detection, and a Docker/Nginx hosting setup.
 
 ## Stack
 

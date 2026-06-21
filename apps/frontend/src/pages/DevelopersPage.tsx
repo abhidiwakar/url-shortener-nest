@@ -1,4 +1,3 @@
-import LinkIcon from '@mui/icons-material/Link';
 import LoginIcon from '@mui/icons-material/Login';
 import MenuIcon from '@mui/icons-material/Menu';
 import {
@@ -20,6 +19,7 @@ import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { getToken } from '../auth';
 import { AuthenticatedShell } from '../components/AuthenticatedShell';
+import { BrandMark } from '../components/BrandMark';
 import { getOpenApiSpecUrl } from '../lib/developers';
 import { PRODUCT_NAME, PRODUCT_TAGLINE } from '../constants/product';
 
@@ -38,7 +38,7 @@ function DevelopersReference({
         configuration={{
           url: getOpenApiSpecUrl(),
           metaData: {
-            title: 'Linkable Integration API',
+            title: `${PRODUCT_NAME} Integration API`,
             description:
               'Create, list, archive, and restore short links from your integrations.',
           },
@@ -74,9 +74,7 @@ function PublicDevelopersToolbar() {
           spacing={1.25}
           sx={{ alignItems: 'center' }}
         >
-          <Box className="brand-mark">
-            <LinkIcon fontSize="small" />
-          </Box>
+          <BrandMark />
           <Box sx={{ minWidth: 0 }}>
             <Typography noWrap variant="subtitle1" sx={{ fontWeight: 800 }}>
               {PRODUCT_NAME}
