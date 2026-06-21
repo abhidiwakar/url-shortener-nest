@@ -29,7 +29,16 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
         ) : null}
       </Box>
       {actions ? (
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1.5}
+          sx={{
+            width: { xs: '100%', sm: 'auto' },
+            '& .MuiButton-root, & .MuiToggleButtonGroup-root': {
+              width: { xs: '100%', sm: 'auto' },
+            },
+          }}
+        >
           {actions}
         </Stack>
       ) : null}

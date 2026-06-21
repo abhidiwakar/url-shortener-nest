@@ -121,17 +121,107 @@ a {
 .mobile-topbar {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 1100;
   padding: 8px 12px;
+  padding-top: max(8px, env(safe-area-inset-top));
   border-bottom: 1px solid #e2e8f0;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1100;
+  border-top: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-bottom-nav .MuiBottomNavigation-root {
+  height: 56px;
+  background: transparent;
+}
+
+.mobile-drawer {
+  height: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mobile-drawer-header {
+  flex-shrink: 0;
+  padding: max(16px, env(safe-area-inset-top)) 16px 12px;
+}
+
+.mobile-drawer-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-inline: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-drawer-footer {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  border-top: 1px solid #eef2f6;
+  background: #ffffff;
+}
+
+.bottom-nav-item {
+  min-width: 0 !important;
+  padding-top: 6px !important;
+}
+
+.bottom-nav-item .MuiBottomNavigationAction-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.bottom-nav-item-active {
+  color: #1769aa !important;
+}
+
+.bottom-nav-item-active .MuiBottomNavigationAction-label {
+  font-weight: 700;
+}
+
+.app-shell--with-mobile-nav .app-main {
+  padding-bottom: calc(56px + env(safe-area-inset-bottom));
+}
+
+.app-shell--docs {
+  min-height: 100svh;
+}
+
+.app-shell--docs .app-main {
+  min-height: 100svh;
+  padding-bottom: calc(56px + env(safe-area-inset-bottom));
 }
 
 .app-content {
   width: min(100%, 1120px);
   margin-inline: auto;
   padding: 28px 24px 40px;
+}
+
+.app-content--docs {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .surface-card {
@@ -194,6 +284,12 @@ a {
   height: calc(100svh - 64px);
 }
 
+.developers-reference--in-shell {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
 .profile-panel {
   padding: 28px;
   max-width: 560px;
@@ -247,7 +343,35 @@ a {
     padding: 24px;
   }
 
-  .app-content {
-    padding: 20px 16px 32px;
+  .app-content:not(.app-content--docs) {
+    padding: 16px 12px 24px;
+  }
+
+  .developers-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: auto;
+    padding-block: 10px;
+  }
+
+  .developers-toolbar-brand {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .developers-toolbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .developers-toolbar-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .developers-toolbar-actions .MuiButton-root {
+    flex-shrink: 0;
   }
 }

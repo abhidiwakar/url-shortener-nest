@@ -2,8 +2,11 @@ import CodeIcon from '@mui/icons-material/Code';
 import KeyIcon from '@mui/icons-material/Key';
 import LinkIcon from '@mui/icons-material/Link';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MenuIcon from '@mui/icons-material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
 import {
+  BottomNavigation,
+  BottomNavigationAction,
   Box,
   Button,
   Drawer,
@@ -17,7 +20,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
@@ -25,7 +27,7 @@ import { clearAuth, getUser } from '../auth';
 import { PRODUCT_NAME, PRODUCT_TAGLINE } from '../constants/product';
 
 const NAV_ITEMS = [
-  { label: 'My links', path: '/my-links', icon: LinkIcon },
+  { label: 'Links', path: '/my-links', icon: LinkIcon },
   { label: 'API keys', path: '/api-keys', icon: KeyIcon },
   { label: 'Developers', path: '/developers', icon: CodeIcon },
   { label: 'Profile', path: '/profile', icon: PersonIcon },
@@ -33,22 +35,31 @@ const NAV_ITEMS = [
 
 interface AuthenticatedShellProps {
   children: ReactNode;
+  /** Full-bleed layout for embedded docs (no content padding, flex height). */
+  variant?: 'default' | 'docs';
+}
+
+function isNavActive(path: string, pathname: string): boolean {
+  if (path === '/developers') {
+    return pathname.startsWith('/developers');
+  }
+
+  return pathname === path;
 }
 
 function SidebarNav({
   onNavigate,
+  compact = false,
 }: {
   onNavigate?: () => void;
+  compact?: boolean;
 }) {
   const location = useLocation();
 
   return (
-    <List disablePadding sx={{ px: 1.5, py: 1 }}>
+    <List disablePadding sx={{ px: compact ? 0 : 1.5, py: compact ? 0 : 1 }}>
       {NAV_ITEMS.map(({ label, path, icon: Icon }) => {
-        const isActive =
-          path === '/developers'
-            ? location.pathname.startsWith('/developers')
-            : location.pathname === path;
+        const isActive = isNavActive(path, location.pathname);
 
         return (
           <ListItemButton
@@ -57,8 +68,9 @@ function SidebarNav({
             key={path}
             onClick={onNavigate}
             to={path}
+            sx={compact ? { borderRadius: 2, minHeight: 48 } : undefined}
           >
-            <ListItemIcon sx={{ minWidth: 36 }}>
+            <ListItemIcon sx={{ minWidth: compact ? 40 : 36 }}>
               <Icon fontSize="small" />
             </ListItemIcon>
             <ListItemText
@@ -74,16 +86,70 @@ function SidebarNav({
   );
 }
 
-export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
+function MobileBottomNav() {
+  const location = useLocation();
+
+  const currentValue = NAV_ITEMS.find(({ path }) =>
+    isNavActive(path, location.pathname),
+  )?.path;
+
+  return (
+    <Box
+      className="mobile-bottom-nav"
+      component="nav"
+      sx={{
+        display: { xs: 'block', md: 'none' },
+      }}
+    >
+      <BottomNavigation showLabels value={currentValue ?? false}>
+        {NAV_ITEMS.map(({ label, path, icon: Icon }) => {
+          const isActive = isNavActive(path, location.pathname);
+
+          return (
+            <BottomNavigationAction
+              className={
+                isActive
+                  ? 'bottom-nav-item bottom-nav-item-active'
+                  : 'bottom-nav-item'
+              }
+              component={RouterLink}
+              icon={<Icon />}
+              key={path}
+              label={label}
+              to={path}
+              value={path}
+            />
+          );
+        })}
+      </BottomNavigation>
+    </Box>
+  );
+}
+
+function getMobileTitle(pathname: string): string {
+  const match = NAV_ITEMS.find(({ path }) => isNavActive(path, pathname));
+  return match?.label ?? PRODUCT_NAME;
+}
+
+export function AuthenticatedShell({
+  children,
+  variant = 'default',
+}: AuthenticatedShellProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const isDocs = variant === 'docs';
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const user = getUser();
 
   function handleLogout() {
     clearAuth();
     navigate('/login', { replace: true });
+  }
+
+  function closeDrawer() {
+    setDrawerOpen(false);
   }
 
   const sidebar = (
@@ -92,19 +158,21 @@ export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
         <Box className="brand-mark">
           <LinkIcon fontSize="small" />
         </Box>
-        <Box>
-          <Typography sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography noWrap sx={{ fontWeight: 800, lineHeight: 1.2 }}>
             {PRODUCT_NAME}
           </Typography>
-          <Typography color="text.secondary" variant="caption">
+          <Typography color="text.secondary" noWrap variant="caption">
             {PRODUCT_TAGLINE}
           </Typography>
         </Box>
       </Stack>
 
-      <Box sx={{ flex: 1, py: 1 }}>
-        <SidebarNav onNavigate={isMobile ? () => setMobileOpen(false) : undefined} />
-      </Box>
+      {!isMobile ? (
+        <Box sx={{ flex: 1, py: 1 }}>
+          <SidebarNav />
+        </Box>
+      ) : null}
 
       <Box className="sidebar-footer">
         <Typography
@@ -135,22 +203,87 @@ export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
     </Stack>
   );
 
-  return (
-    <Box className="app-shell">
-      {isMobile ? (
-        <Drawer
-          ModalProps={{ keepMounted: true }}
-          onClose={() => setMobileOpen(false)}
-          open={mobileOpen}
-          sx={{ '& .MuiDrawer-paper': { width: 280 } }}
+  const mobileDrawer = (
+    <Drawer
+      ModalProps={{ keepMounted: true }}
+      onClose={closeDrawer}
+      open={drawerOpen}
+      sx={{
+        display: { xs: 'block', md: 'none' },
+        '& .MuiDrawer-paper': {
+          width: 'min(100vw, 300px)',
+          maxWidth: '100%',
+          height: '100%',
+          maxHeight: '100dvh',
+          overflow: 'hidden',
+        },
+      }}
+    >
+      <Stack className="mobile-drawer">
+        <Stack
+          className="mobile-drawer-header"
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: 'center', justifyContent: 'space-between' }}
         >
-          {sidebar}
-        </Drawer>
-      ) : (
+          <Typography sx={{ fontWeight: 800 }}>Menu</Typography>
+          <IconButton aria-label="Close menu" edge="end" onClick={closeDrawer}>
+            <MenuIcon />
+          </IconButton>
+        </Stack>
+
+        <Box className="mobile-drawer-nav">
+          <SidebarNav compact onNavigate={closeDrawer} />
+        </Box>
+
+        <Box className="mobile-drawer-footer">
+          <Typography
+            noWrap
+            sx={{ fontSize: '0.875rem', fontWeight: 700, mb: 0.25 }}
+            title={user?.name ?? user?.email ?? undefined}
+          >
+            {user?.name ?? 'Your profile'}
+          </Typography>
+          <Typography
+            color="text.secondary"
+            sx={{
+              fontSize: '0.8125rem',
+              mb: 1.5,
+              overflowWrap: 'anywhere',
+              wordBreak: 'break-word',
+            }}
+            title={user?.email}
+          >
+            {user?.email}
+          </Typography>
+          <Button
+            color="inherit"
+            fullWidth
+            onClick={() => {
+              closeDrawer();
+              handleLogout();
+            }}
+            startIcon={<LogoutIcon fontSize="small" />}
+            sx={{ justifyContent: 'flex-start', color: 'text.secondary' }}
+          >
+            Sign out
+          </Button>
+        </Box>
+      </Stack>
+    </Drawer>
+  );
+
+  return (
+    <Box
+      className={
+        isDocs ? 'app-shell app-shell--docs' : 'app-shell app-shell--with-mobile-nav'
+      }
+    >
+      {!isMobile ? (
         <Box className="app-sidebar" component="aside">
           {sidebar}
         </Box>
-      )}
+      ) : null}
 
       <Box className="app-main" component="main">
         {isMobile ? (
@@ -161,18 +294,31 @@ export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
             sx={{ alignItems: 'center' }}
           >
             <IconButton
-              aria-label="Open navigation"
+              aria-label="Open menu"
               edge="start"
-              onClick={() => setMobileOpen(true)}
+              onClick={() => setDrawerOpen(true)}
             >
               <MenuIcon />
             </IconButton>
-            <Typography sx={{ fontWeight: 800 }}>{PRODUCT_NAME}</Typography>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography noWrap sx={{ fontWeight: 800 }}>
+                {getMobileTitle(location.pathname)}
+              </Typography>
+            </Box>
           </Stack>
         ) : null}
 
-        <Box className="app-content">{children}</Box>
+        <Box
+          className={
+            isDocs ? 'app-content app-content--docs' : 'app-content'
+          }
+        >
+          {children}
+        </Box>
       </Box>
+
+      {isMobile && !drawerOpen ? <MobileBottomNav /> : null}
+      {isMobile ? mobileDrawer : null}
     </Box>
   );
 }
