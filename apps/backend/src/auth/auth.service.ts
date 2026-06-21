@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { AuthResponse, AuthenticatedUser } from '@url-shortener/shared';
@@ -77,6 +77,21 @@ export class AuthService {
     return this.toAuthenticatedUser(user);
   }
 
+  async updateProfile(
+    userId: string,
+    name: string,
+  ): Promise<AuthenticatedUser> {
+    const normalizedName = name.trim();
+
+    if (!normalizedName) {
+      throw new BadRequestException('Name cannot be empty');
+    }
+
+    const user = await this.usersService.updateName(userId, normalizedName);
+
+    return this.toAuthenticatedUser(user);
+  }
+
   private async createAuthResponse(user: UserDocument): Promise<AuthResponse> {
     const safeUser = this.toAuthenticatedUser(user);
     const accessToken = await this.jwtService.signAsync(
@@ -100,6 +115,7 @@ export class AuthService {
     return {
       id: user._id.toString(),
       email: user.email,
+      name: user.name ?? null,
     };
   }
 

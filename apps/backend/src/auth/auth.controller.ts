@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -19,6 +20,7 @@ import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import type { AuthResponse, AuthenticatedUser } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import type { AuthenticatedRequest } from './jwt-auth.guard';
 import { TurnstileService } from './turnstile.service';
@@ -75,6 +77,21 @@ export class AuthController {
   @ApiOkResponse({ type: AuthenticatedUserDto })
   me(@Req() request: AuthenticatedRequest): AuthenticatedUser {
     return request.user;
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Update the current user profile' })
+  @ApiOkResponse({ type: AuthenticatedUserDto })
+  updateMe(
+    @Req() request: AuthenticatedRequest,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ): Promise<AuthenticatedUser> {
+    return this.authService.updateProfile(
+      request.user.id,
+      updateProfileDto.name,
+    );
   }
 
   private getClientIp(request: Request): string | undefined {

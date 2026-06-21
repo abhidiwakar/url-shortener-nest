@@ -1,61 +1,143 @@
+:root {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: #0f172a;
+}
+
+a {
+  color: inherit;
+}
+
 .auth-shell {
   min-height: 100svh;
   display: grid;
+  grid-template-columns: 1fr;
+  background: #f4f6f9;
+}
+
+.auth-showcase {
+  display: none;
+}
+
+.auth-panel-wrap {
+  display: grid;
   place-items: center;
   padding: 32px 16px;
-  background:
-    linear-gradient(135deg, rgba(23, 105, 170, 0.08), transparent 42%),
-    linear-gradient(315deg, rgba(46, 125, 50, 0.08), transparent 34%),
-    #f6f8fb;
 }
 
 .auth-panel {
-  width: min(100%, 460px);
+  width: min(100%, 420px);
   padding: 32px;
-  border: 1px solid #dce3ec;
-  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .brand-mark {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  background: #1769aa;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #1769aa, #1e88c9);
+  border-radius: 10px;
   flex: 0 0 auto;
+  box-shadow: 0 4px 12px rgba(23, 105, 170, 0.28);
 }
 
 .app-shell {
   min-height: 100svh;
-  background: #f6f8fb;
-}
-
-.toolbar {
-  min-height: 72px;
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid #dce3ec;
+  background: #f4f6f9;
 }
 
-.content {
-  padding-block: 32px;
+.app-sidebar {
+  width: 260px;
+  flex: 0 0 260px;
+  border-right: 1px solid #e2e8f0;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  height: 100svh;
 }
 
-.dashboard-header,
-.links-panel {
-  border: 1px solid #dce3ec;
-  border-radius: 8px;
+.sidebar-inner {
+  height: 100%;
+  padding: 20px 12px;
 }
 
-.dashboard-header {
-  padding: 24px;
+.sidebar-brand {
+  align-items: center;
+  padding: 8px 12px 20px;
 }
 
-.links-panel {
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 12px 8px;
+  border-top: 1px solid #eef2f6;
+}
+
+.nav-item {
+  border-radius: 10px !important;
+  margin-bottom: 4px;
+  color: #64748b;
+}
+
+.nav-item-active {
+  background: #e8f2fa !important;
+  color: #1769aa !important;
+}
+
+.nav-item-active .MuiListItemIcon-root {
+  color: #1769aa;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+}
+
+.app-content {
+  width: min(100%, 1120px);
+  margin-inline: auto;
+  padding: 28px 24px 40px;
+}
+
+.surface-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
   overflow: hidden;
 }
 
@@ -66,19 +148,34 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 32px;
+  padding: 48px 32px;
   text-align: center;
 }
 
+.state-icon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #e8f2fa;
+  color: #1769aa;
+}
+
 .destination-cell {
-  max-width: 460px;
+  max-width: 420px;
+}
+
+.link-short-url {
+  font-weight: 700;
+  color: #1769aa;
 }
 
 .developers-shell {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  background: #f6f8fb;
+  background: #f4f6f9;
 }
 
 .developers-toolbar {
@@ -86,7 +183,9 @@
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid #dce3ec;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding-inline: 16px;
 }
 
 .developers-reference {
@@ -95,10 +194,52 @@
   height: calc(100svh - 64px);
 }
 
+.profile-panel {
+  padding: 28px;
+  max-width: 560px;
+}
+
 .turnstile-box {
   min-height: 65px;
   display: flex;
   align-items: center;
+}
+
+@media (min-width: 960px) {
+  .auth-shell {
+    grid-template-columns: 1.1fr 1fr;
+  }
+
+  .auth-showcase {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 64px;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(23, 105, 170, 0.18), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(46, 125, 50, 0.12), transparent 35%),
+      linear-gradient(160deg, #0f172a 0%, #1769aa 100%);
+    color: #ffffff;
+  }
+
+  .auth-showcase h2 {
+    margin: 0 0 12px;
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+
+  .auth-showcase p {
+    margin: 0;
+    max-width: 42ch;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  .auth-panel-wrap {
+    padding: 48px 32px;
+  }
 }
 
 @media (max-width: 700px) {
@@ -106,11 +247,7 @@
     padding: 24px;
   }
 
-  .content {
-    padding-block: 20px;
-  }
-
-  .dashboard-header {
-    padding: 20px;
+  .app-content {
+    padding: 20px 16px 32px;
   }
 }

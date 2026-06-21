@@ -30,6 +30,8 @@ import type { FormEvent } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { createApiKey, getApiKeys, revokeApiKey } from '../api';
 import { AuthenticatedShell } from '../components/AuthenticatedShell';
+import { EmptyState } from '../components/EmptyState';
+import { PageHeader } from '../components/PageHeader';
 import { getToken } from '../auth';
 
 function formatTimestamp(value: string | null): string {
@@ -170,58 +172,48 @@ export function ApiKeysPage() {
 
   return (
     <AuthenticatedShell>
-      <Stack spacing={3}>
-        <Paper className="dashboard-header" elevation={0}>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
-            sx={{ justifyContent: 'space-between' }}
+      <PageHeader
+        actions={
+          <Button
+            onClick={openCreateDialog}
+            size="large"
+            startIcon={<AddIcon />}
+            variant="contained"
           >
-            <Box>
-              <Typography variant="h4">API keys</Typography>
-              <Typography color="text.secondary">
-                Create keys for third-party integrations. Keys can access the
-                public Linkable API only.
-              </Typography>
-            </Box>
-            <Button
-              onClick={openCreateDialog}
-              size="large"
-              startIcon={<AddIcon />}
-              variant="contained"
-            >
-              Create API key
-            </Button>
-          </Stack>
-        </Paper>
+            Create API key
+          </Button>
+        }
+        description="Create keys for third-party integrations. Keys can access the public Linkable API only."
+        title="API keys"
+      />
 
-        <Alert severity="info">
-          Use these keys with the integration API documented in the{' '}
-          <Typography
-            component={RouterLink}
-            sx={{ fontWeight: 700 }}
-            to="/developers"
-          >
-            developer docs
-          </Typography>
-          . Send the key as `X-API-Key` or `Authorization: Bearer &lt;key&gt;`.
+      <Alert severity="info" sx={{ mb: 2 }}>
+        Use these keys with the integration API documented in the{' '}
+        <Typography
+          component={RouterLink}
+          sx={{ fontWeight: 700 }}
+          to="/developers"
+        >
+          developer docs
+        </Typography>
+        . Send the key as `X-API-Key` or `Authorization: Bearer &lt;key&gt;`.
+      </Alert>
+
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
         </Alert>
+      ) : null}
 
-        {error ? <Alert severity="error">{error}</Alert> : null}
-
-        <Paper elevation={0} className="links-panel">
-          {isLoading ? (
-            <Box className="state-panel">
-              <CircularProgress size={28} />
-              <Typography color="text.secondary">Loading API keys...</Typography>
-            </Box>
-          ) : apiKeys.length === 0 ? (
-            <Box className="state-panel">
-              <KeyIcon color="primary" />
-              <Typography variant="h6">No API keys yet</Typography>
-              <Typography color="text.secondary">
-                Create a key to connect external systems to Linkable.
-              </Typography>
+      <Paper className="surface-card" elevation={0}>
+        {isLoading ? (
+          <Box className="state-panel">
+            <CircularProgress size={28} />
+            <Typography color="text.secondary">Loading API keys...</Typography>
+          </Box>
+        ) : apiKeys.length === 0 ? (
+          <EmptyState
+            action={
               <Button
                 onClick={openCreateDialog}
                 startIcon={<AddIcon />}
@@ -229,9 +221,13 @@ export function ApiKeysPage() {
               >
                 Create API key
               </Button>
-            </Box>
-          ) : (
-            <TableContainer>
+            }
+            description="Create a key to connect external systems to Linkable."
+            icon={<KeyIcon />}
+            title="No API keys yet"
+          />
+        ) : (
+          <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -273,9 +269,8 @@ export function ApiKeysPage() {
                 </TableBody>
               </Table>
             </TableContainer>
-          )}
-        </Paper>
-      </Stack>
+        )}
+      </Paper>
 
       <Dialog
         fullWidth

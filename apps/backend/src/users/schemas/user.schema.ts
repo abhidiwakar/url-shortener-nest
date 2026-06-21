@@ -15,6 +15,9 @@ export class User {
 
   @Prop({ required: true })
   passwordHash: string;
+
+  @Prop({ type: String, trim: true, maxlength: 80, default: null })
+  name: string | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

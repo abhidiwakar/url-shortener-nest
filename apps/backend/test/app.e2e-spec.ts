@@ -169,7 +169,43 @@ describe('AppController (e2e)', () => {
       expect(body).toEqual({
         id: signupBody.user.id,
         email,
+        name: null,
       });
+    });
+
+    it('updates the authenticated user name', async () => {
+      const signupResponse = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({ email, password, turnstileToken })
+        .expect(201);
+      const signupBody = signupResponse.body as unknown as AuthResponseBody;
+
+      const response = await request(app.getHttpServer())
+        .patch('/auth/me')
+        .set('Authorization', `Bearer ${signupBody.accessToken}`)
+        .send({ name: 'Alex Morgan' })
+        .expect(200);
+      const body = response.body as unknown as AuthResponseBody['user'];
+
+      expect(body).toEqual({
+        id: signupBody.user.id,
+        email,
+        name: 'Alex Morgan',
+      });
+    });
+
+    it('rejects empty profile names', async () => {
+      const signupResponse = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({ email, password, turnstileToken })
+        .expect(201);
+      const signupBody = signupResponse.body as unknown as AuthResponseBody;
+
+      await request(app.getHttpServer())
+        .patch('/auth/me')
+        .set('Authorization', `Bearer ${signupBody.accessToken}`)
+        .send({ name: '   ' })
+        .expect(400);
     });
 
     it('rejects profile requests without a bearer token', async () => {

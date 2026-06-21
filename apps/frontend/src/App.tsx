@@ -28,7 +28,6 @@ import {
   TextField,
   ThemeProvider,
   Typography,
-  createTheme,
 } from '@mui/material';
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import type { FormEvent, ReactElement } from 'react';
@@ -53,7 +52,12 @@ import {
 import type { ShortLink } from './api';
 import { getToken, saveAuth } from './auth';
 import { AuthenticatedShell } from './components/AuthenticatedShell';
+import { EmptyState } from './components/EmptyState';
+import { PageHeader } from './components/PageHeader';
 import { ApiKeysPage } from './pages/ApiKeysPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { theme } from './theme';
+import { PRODUCT_NAME } from './constants/product';
 import './App.css';
 
 const DevelopersPage = lazy(() =>
@@ -62,7 +66,6 @@ const DevelopersPage = lazy(() =>
   })),
 );
 
-const PRODUCT_NAME = 'Linkable';
 const TURNSTILE_SCRIPT_URL =
   'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
@@ -172,62 +175,6 @@ function TurnstileWidget({
   );
 }
 
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#1769aa',
-    },
-    secondary: {
-      main: '#2e7d32',
-    },
-    background: {
-      default: '#f6f8fb',
-      paper: '#ffffff',
-    },
-    text: {
-      primary: '#172033',
-      secondary: '#667085',
-    },
-  },
-  shape: {
-    borderRadius: 8,
-  },
-  typography: {
-    fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    h4: {
-      fontWeight: 700,
-      letterSpacing: 0,
-    },
-    h5: {
-      fontWeight: 700,
-      letterSpacing: 0,
-    },
-    button: {
-      fontWeight: 700,
-      letterSpacing: 0,
-      textTransform: 'none',
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          minHeight: 40,
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          backgroundImage: 'none',
-        },
-      },
-    },
-  },
-});
-
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const location = useLocation();
 
@@ -286,86 +233,102 @@ function AuthLayout({ mode }: { mode: 'login' | 'register' }) {
 
   return (
     <Box className="auth-shell">
-      <Paper className="auth-panel" elevation={0}>
-        <Stack spacing={3}>
-          <Stack spacing={1}>
-            <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
-              <Box className="brand-mark">
-                <LinkIcon fontSize="small" />
-              </Box>
-              <Typography variant="overline" color="text.secondary">
-                {PRODUCT_NAME}
-              </Typography>
-            </Stack>
-            <Typography variant="h4">
-              {isLogin ? 'Sign in to your workspace' : 'Create your account'}
-            </Typography>
-            <Typography color="text.secondary">
-              {isLogin
-                ? 'Manage your shortened links and create new ones in seconds.'
-                : 'Register to start saving memorable short links under your account.'}
+      <Box className="auth-showcase">
+        <Stack spacing={2.5} sx={{ maxWidth: 480 }}>
+          <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
+            <Box className="brand-mark">
+              <LinkIcon fontSize="small" />
+            </Box>
+            <Typography sx={{ fontWeight: 800, letterSpacing: '0.06em' }}>
+              {PRODUCT_NAME}
             </Typography>
           </Stack>
-
-          {error ? <Alert severity="error">{error}</Alert> : null}
-
-          <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={2.25}>
-              <TextField
-                autoComplete="email"
-                autoFocus
-                fullWidth
-                label="Email"
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                type="email"
-                value={email}
-              />
-              <TextField
-                autoComplete={isLogin ? 'current-password' : 'new-password'}
-                fullWidth
-                helperText="Use at least 6 characters."
-                label="Password"
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                type="password"
-                value={password}
-              />
-              <TurnstileWidget
-                key={turnstileResetKey}
-                onTokenChange={setTurnstileToken}
-              />
-              <Button
-                disabled={isSubmitting || !turnstileToken}
-                fullWidth
-                size="large"
-                type="submit"
-                variant="contained"
-              >
-                {isSubmitting ? 'Working...' : isLogin ? 'Login' : 'Register'}
-              </Button>
-            </Stack>
+          <Box>
+            <Typography component="h2" sx={{ fontWeight: 800, fontSize: '2.5rem' }}>
+              Short links you can actually manage
+            </Typography>
+            <Typography sx={{ mt: 1.5, color: 'rgba(255,255,255,0.82)' }}>
+              Create memorable links, track what you have shared, and connect
+              external systems with API keys — all from one workspace.
+            </Typography>
           </Box>
-
-          <Typography color="text.secondary" sx={{ textAlign: 'center' }}>
-            {isLogin ? 'No account yet?' : 'Already registered?'}{' '}
-            <Button
-              component={RouterLink}
-              size="small"
-              to={isLogin ? '/register' : '/login'}
-            >
-              {isLogin ? 'Create one' : 'Login'}
-            </Button>
-          </Typography>
-
-          <Typography color="text.secondary" sx={{ textAlign: 'center' }}>
-            Building an integration?{' '}
-            <Button component={RouterLink} size="small" to="/developers">
-              View API docs
-            </Button>
-          </Typography>
         </Stack>
-      </Paper>
+      </Box>
+
+      <Box className="auth-panel-wrap">
+        <Paper className="auth-panel" elevation={0}>
+          <Stack spacing={3}>
+            <Stack spacing={1}>
+              <Typography variant="h4">
+                {isLogin ? 'Welcome back' : 'Create your account'}
+              </Typography>
+              <Typography color="text.secondary">
+                {isLogin
+                  ? 'Sign in to manage your links and API keys.'
+                  : 'Get started with memorable short links under your account.'}
+              </Typography>
+            </Stack>
+
+            {error ? <Alert severity="error">{error}</Alert> : null}
+
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2.25}>
+                <TextField
+                  autoComplete="email"
+                  autoFocus
+                  fullWidth
+                  label="Email"
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                  type="email"
+                  value={email}
+                />
+                <TextField
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
+                  fullWidth
+                  helperText="Use at least 6 characters."
+                  label="Password"
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  type="password"
+                  value={password}
+                />
+                <TurnstileWidget
+                  key={turnstileResetKey}
+                  onTokenChange={setTurnstileToken}
+                />
+                <Button
+                  disabled={isSubmitting || !turnstileToken}
+                  fullWidth
+                  size="large"
+                  type="submit"
+                  variant="contained"
+                >
+                  {isSubmitting ? 'Working...' : isLogin ? 'Sign in' : 'Create account'}
+                </Button>
+              </Stack>
+            </Box>
+
+            <Typography color="text.secondary" sx={{ textAlign: 'center' }}>
+              {isLogin ? 'No account yet?' : 'Already registered?'}{' '}
+              <Button
+                component={RouterLink}
+                size="small"
+                to={isLogin ? '/register' : '/login'}
+              >
+                {isLogin ? 'Create one' : 'Sign in'}
+              </Button>
+            </Typography>
+
+            <Typography color="text.secondary" sx={{ textAlign: 'center' }}>
+              Building an integration?{' '}
+              <Button component={RouterLink} size="small" to="/developers">
+                View API docs
+              </Button>
+            </Typography>
+          </Stack>
+        </Paper>
+      </Box>
     </Box>
   );
 }
@@ -532,130 +495,126 @@ function MyLinksPage() {
 
   return (
     <AuthenticatedShell>
-      <Stack spacing={3}>
-          <Paper className="dashboard-header" elevation={0}>
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={2}
-              sx={{ justifyContent: 'space-between' }}
+      <PageHeader
+        actions={
+          <>
+            <ToggleButtonGroup
+              color="primary"
+              exclusive
+              onChange={(_, value: 'active' | 'archived' | null) => {
+                if (value) {
+                  setIsArchivedView(value === 'archived');
+                }
+              }}
+              size="small"
+              value={isArchivedView ? 'archived' : 'active'}
             >
-              <Box>
-                <Typography variant="h4">My links</Typography>
-                <Typography color="text.secondary">{linkCountLabel}</Typography>
-              </Box>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                <ToggleButtonGroup
-                  color="primary"
-                  exclusive
-                  onChange={(_, value: 'active' | 'archived' | null) => {
-                    if (value) {
-                      setIsArchivedView(value === 'archived');
-                    }
-                  }}
-                  size="small"
-                  value={isArchivedView ? 'archived' : 'active'}
-                >
-                  <ToggleButton value="active">Active</ToggleButton>
-                  <ToggleButton value="archived">Archived</ToggleButton>
-                </ToggleButtonGroup>
+              <ToggleButton value="active">Active</ToggleButton>
+              <ToggleButton value="archived">Archived</ToggleButton>
+            </ToggleButtonGroup>
+            <Button
+              onClick={openCreateDialog}
+              size="large"
+              startIcon={<AddIcon />}
+              variant="contained"
+            >
+              Create link
+            </Button>
+          </>
+        }
+        description={linkCountLabel}
+        title="My links"
+      />
+
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      ) : null}
+
+      <Paper className="surface-card" elevation={0}>
+        {isLoading ? (
+          <Box className="state-panel">
+            <CircularProgress size={28} />
+            <Typography color="text.secondary">Loading links...</Typography>
+          </Box>
+        ) : links.length === 0 ? (
+          <EmptyState
+            action={
+              !isArchivedView ? (
                 <Button
                   onClick={openCreateDialog}
-                  size="large"
                   startIcon={<AddIcon />}
                   variant="contained"
                 >
                   Create link
                 </Button>
-              </Stack>
-            </Stack>
-          </Paper>
-
-          {error ? <Alert severity="error">{error}</Alert> : null}
-
-          <Paper elevation={0} className="links-panel">
-            {isLoading ? (
-              <Box className="state-panel">
-                <CircularProgress size={28} />
-                <Typography color="text.secondary">Loading links...</Typography>
-              </Box>
-            ) : links.length === 0 ? (
-              <Box className="state-panel">
-                <LinkIcon color="primary" />
-                <Typography variant="h6">
-                  {isArchivedView
-                    ? 'No archived links'
-                    : 'No shortened links yet'}
-                </Typography>
-                <Typography color="text.secondary">
-                  {isArchivedView
-                    ? 'Archived links will appear here when you move them out of active use.'
-                    : 'Create your first short link to see it listed here.'}
-                </Typography>
-                {!isArchivedView ? (
-                  <Button
-                    onClick={openCreateDialog}
-                    startIcon={<AddIcon />}
-                    variant="contained"
-                  >
-                    Create link
-                  </Button>
-                ) : null}
-              </Box>
-            ) : (
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Short link</TableCell>
-                      <TableCell>Destination</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {links.map((link) => (
-                      <TableRow key={link.id} hover>
-                        <TableCell>
-                          <Typography sx={{ fontWeight: 700 }}>
-                            {getShortUrl(link.shortId)}
-                          </Typography>
-                          <Typography color="text.secondary" variant="caption">
-                            {link.shortId}
-                          </Typography>
-                        </TableCell>
-                        <TableCell className="destination-cell">
-                          <Typography noWrap>{link.fullUrl}</Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton
-                            aria-label={`Copy ${link.shortId}`}
-                            onClick={() => void copyLink(link)}
-                          >
-                            <ContentCopyIcon fontSize="small" />
-                          </IconButton>
-                          {isArchivedView ? (
-                            <IconButton
-                              aria-label={`Restore ${link.shortId}`}
-                              onClick={() => void handleUnarchive(link)}
-                            >
-                              <UnarchiveIcon fontSize="small" />
-                            </IconButton>
-                          ) : (
-                            <IconButton
-                              aria-label={`Archive ${link.shortId}`}
-                              onClick={() => void handleArchive(link)}
-                            >
-                              <ArchiveIcon fontSize="small" />
-                            </IconButton>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </Paper>
-        </Stack>
+              ) : undefined
+            }
+            description={
+              isArchivedView
+                ? 'Archived links will appear here when you move them out of active use.'
+                : 'Create your first short link to see it listed here.'
+            }
+            icon={<LinkIcon />}
+            title={
+              isArchivedView ? 'No archived links' : 'No shortened links yet'
+            }
+          />
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Short link</TableCell>
+                  <TableCell>Destination</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {links.map((link) => (
+                  <TableRow key={link.id} hover>
+                    <TableCell>
+                      <Typography className="link-short-url">
+                        {getShortUrl(link.shortId)}
+                      </Typography>
+                      <Typography color="text.secondary" variant="caption">
+                        {link.shortId}
+                      </Typography>
+                    </TableCell>
+                    <TableCell className="destination-cell">
+                      <Typography noWrap>{link.fullUrl}</Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        aria-label={`Copy ${link.shortId}`}
+                        onClick={() => void copyLink(link)}
+                      >
+                        <ContentCopyIcon fontSize="small" />
+                      </IconButton>
+                      {isArchivedView ? (
+                        <IconButton
+                          aria-label={`Restore ${link.shortId}`}
+                          onClick={() => void handleUnarchive(link)}
+                        >
+                          <UnarchiveIcon fontSize="small" />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          aria-label={`Archive ${link.shortId}`}
+                          onClick={() => void handleArchive(link)}
+                        >
+                          <ArchiveIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Paper>
 
       <Dialog
         fullWidth
@@ -744,28 +703,30 @@ function NotFoundPage() {
 
   return (
     <Box className="auth-shell">
-      <Paper className="auth-panel" elevation={0}>
-        <Stack spacing={3} sx={{ alignItems: 'center', textAlign: 'center' }}>
-          <Box className="brand-mark">
-            <LinkIcon fontSize="small" />
-          </Box>
-          <Typography variant="overline" color="text.secondary">
-            {PRODUCT_NAME}
-          </Typography>
-          <Typography variant="h4">Link not found</Typography>
-          <Typography color="text.secondary">
-            This short link does not exist, has been removed, or is no longer
-            active.
-          </Typography>
-          <Button
-            component={RouterLink}
-            to={isAuthenticated ? '/my-links' : '/login'}
-            variant="contained"
-          >
-            {isAuthenticated ? 'Back to my links' : 'Go to login'}
-          </Button>
-        </Stack>
-      </Paper>
+      <Box className="auth-panel-wrap" sx={{ gridColumn: '1 / -1' }}>
+        <Paper className="auth-panel" elevation={0}>
+          <Stack spacing={3} sx={{ alignItems: 'center', textAlign: 'center' }}>
+            <Box className="brand-mark">
+              <LinkIcon fontSize="small" />
+            </Box>
+            <Typography variant="overline" color="text.secondary">
+              {PRODUCT_NAME}
+            </Typography>
+            <Typography variant="h4">Link not found</Typography>
+            <Typography color="text.secondary">
+              This short link does not exist, has been removed, or is no longer
+              active.
+            </Typography>
+            <Button
+              component={RouterLink}
+              to={isAuthenticated ? '/my-links' : '/login'}
+              variant="contained"
+            >
+              {isAuthenticated ? 'Back to my links' : 'Go to login'}
+            </Button>
+          </Stack>
+        </Paper>
+      </Box>
     </Box>
   );
 }
@@ -805,6 +766,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ApiKeysPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />

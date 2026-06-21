@@ -29,7 +29,7 @@ export class ApiKeyAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid API key');
     }
 
-    request.user = this.toAuthenticatedUser(user._id.toString(), user.email);
+    request.user = this.toAuthenticatedUser(user);
 
     return true;
   }
@@ -56,7 +56,15 @@ export class ApiKeyAuthGuard implements CanActivate {
     return token;
   }
 
-  private toAuthenticatedUser(id: string, email: string): AuthenticatedUser {
-    return { id, email };
+  private toAuthenticatedUser(user: {
+    _id: { toString(): string };
+    email: string;
+    name?: string | null;
+  }): AuthenticatedUser {
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name ?? null,
+    };
   }
 }

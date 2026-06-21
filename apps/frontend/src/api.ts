@@ -112,6 +112,24 @@ export function register(
   });
 }
 
+export function getProfile(token: string): Promise<AuthenticatedUser> {
+  return request<AuthenticatedUser>('/auth/me', {}, token);
+}
+
+export function updateProfile(
+  token: string,
+  name: string,
+): Promise<AuthenticatedUser> {
+  return request<AuthenticatedUser>(
+    '/auth/me',
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    },
+    token,
+  );
+}
+
 export function getLinks(
   token: string,
   archived = false,
