@@ -44,6 +44,7 @@ import {
   AuthResponseDto,
   AuthenticatedUserDto,
   MfaSetupResponseDto,
+  VerificationResendStatusDto,
 } from '../swagger/dto/auth-response.dto';
 
 @ApiTags('Auth')
@@ -193,16 +194,28 @@ export class AuthController {
     return this.authService.verifyEmail(request.user.id, verifyEmailDto.otp);
   }
 
+  @Get('verification-resend-status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Get email verification resend limits' })
+  @ApiOkResponse({ type: VerificationResendStatusDto })
+  getVerificationResendStatus(
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.authService.getVerificationResendStatus(request.user.id);
+  }
+
   @Post('resend-verification')
-  @HttpCode(204)
+  @HttpCode(200)
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { ttl: 60_000, limit: 3 } })
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Resend the email verification code' })
-  async resendVerification(
+  @ApiOkResponse({ type: VerificationResendStatusDto })
+  resendVerification(
     @Req() request: AuthenticatedRequest,
-  ): Promise<void> {
-    await this.authService.resendVerificationEmail(request.user.id);
+  ) {
+    return this.authService.resendVerificationEmail(request.user.id);
   }
 
   @Get('me')

@@ -8,6 +8,7 @@ export type {
   MfaSetupResponse,
   ResetPasswordRequest,
   UpdateProfileRequest,
+  VerificationResendStatus,
   VerifyEmailRequest,
 } from './auth';
 export type {

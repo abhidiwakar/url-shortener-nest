@@ -48,6 +48,7 @@ import {
   getShortUrl,
   login,
   register,
+  getVerificationResendStatus,
   resendVerificationEmail,
   unarchiveLink,
   verifyEmail,
@@ -478,7 +479,31 @@ function VerifyEmailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
+  const [resendsRemaining, setResendsRemaining] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadResendStatus() {
+      try {
+        const status = await getVerificationResendStatus();
+
+        if (mounted) {
+          setResendCooldownSeconds(status.resendAvailableInSeconds);
+          setResendsRemaining(status.resendsRemaining);
+        }
+      } catch {
+        // Ignore status errors while the session is unavailable.
+      }
+    }
+
+    void loadResendStatus();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (resendCooldownSeconds <= 0) {
@@ -528,7 +553,7 @@ function VerifyEmailPage() {
   }
 
   async function handleResend() {
-    if (resendCooldownSeconds > 0) {
+    if (resendCooldownSeconds > 0 || resendsRemaining === 0) {
       return;
     }
 
@@ -536,10 +561,19 @@ function VerifyEmailPage() {
     setIsResending(true);
 
     try {
-      await resendVerificationEmail();
+      const status = await resendVerificationEmail();
+      setResendCooldownSeconds(status.resendAvailableInSeconds);
+      setResendsRemaining(status.resendsRemaining);
       setToast('Verification code sent');
-      setResendCooldownSeconds(60);
     } catch (caughtError) {
+      try {
+        const status = await getVerificationResendStatus();
+        setResendCooldownSeconds(status.resendAvailableInSeconds);
+        setResendsRemaining(status.resendsRemaining);
+      } catch {
+        // Keep the last known resend state if status cannot be refreshed.
+      }
+
       setError(
         caughtError instanceof Error
           ? caughtError.message
@@ -625,15 +659,21 @@ function VerifyEmailPage() {
             <Typography color="text.secondary" sx={{ textAlign: 'center' }}>
               Didn&apos;t get a code?{' '}
               <Button
-                disabled={isResending || resendCooldownSeconds > 0}
+                disabled={
+                  isResending ||
+                  resendCooldownSeconds > 0 ||
+                  resendsRemaining === 0
+                }
                 onClick={() => void handleResend()}
                 size="small"
               >
                 {resendCooldownSeconds > 0
                   ? `Resend in ${resendCooldownSeconds}s`
-                  : isResending
-                    ? 'Sending...'
-                    : 'Resend code'}
+                  : resendsRemaining === 0
+                    ? 'Resend limit reached'
+                    : isResending
+                      ? 'Sending...'
+                      : 'Resend code'}
               </Button>
             </Typography>
           </Stack>

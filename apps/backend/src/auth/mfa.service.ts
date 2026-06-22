@@ -43,12 +43,7 @@ export class MfaService {
 
     return {
       secret,
-      otpauthUrl: speakeasy.otpauthURL({
-        secret,
-        label: email,
-        issuer: MFA_ISSUER,
-        encoding: 'base32',
-      }),
+      otpauthUrl: this.buildOtpAuthUrl(MFA_ISSUER, email, secret),
     };
   }
 
@@ -190,6 +185,20 @@ export class MfaService {
     if (!isValid) {
       throw new BadRequestException('Incorrect authentication code');
     }
+  }
+
+  private buildOtpAuthUrl(
+    issuer: string,
+    accountName: string,
+    secret: string,
+  ): string {
+    const label = `${encodeURIComponent(issuer)}:${encodeURIComponent(accountName)}`;
+    const params = new URLSearchParams({
+      secret,
+      issuer,
+    });
+
+    return `otpauth://totp/${label}?${params.toString()}`;
   }
 
   private generateSecret(): string {

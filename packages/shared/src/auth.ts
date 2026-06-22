@@ -27,6 +27,11 @@ export interface VerifyEmailRequest {
   otp: string;
 }
 
+export interface VerificationResendStatus {
+  resendAvailableInSeconds: number;
+  resendsRemaining: number;
+}
+
 export interface MfaSetupResponse {
   secret: string;
   otpauthUrl: string;

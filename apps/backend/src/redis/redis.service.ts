@@ -91,6 +91,19 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  async ttl(key: string): Promise<number> {
+    if (!this.client.isOpen) {
+      return -2;
+    }
+
+    try {
+      return await this.client.ttl(key);
+    } catch (error) {
+      this.logger.warn(`Redis ttl failed: ${this.getErrorMessage(error)}`);
+      return -2;
+    }
+  }
+
   private getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : 'Unknown Redis error';
   }

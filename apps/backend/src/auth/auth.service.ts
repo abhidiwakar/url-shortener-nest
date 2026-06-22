@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import type { AuthResponse, AuthenticatedUser } from '@url-shortener/shared';
+import type { AuthResponse, AuthenticatedUser, VerificationResendStatus } from '@url-shortener/shared';
 import * as bcrypt from 'bcryptjs';
 import type { SignOptions } from 'jsonwebtoken';
 import { UserDocument } from '../users/schemas/user.schema';
@@ -121,14 +121,20 @@ export class AuthService {
     return this.toAuthenticatedUser(user);
   }
 
-  async resendVerificationEmail(userId: string): Promise<void> {
+  async resendVerificationEmail(
+    userId: string,
+  ): Promise<VerificationResendStatus> {
     const user = await this.usersService.findById(userId);
 
     if (!user) {
       throw new UnauthorizedException('Invalid token');
     }
 
-    await this.emailVerificationService.resendVerificationOtp(user);
+    return this.emailVerificationService.resendVerificationOtp(user);
+  }
+
+  getVerificationResendStatus(userId: string): Promise<VerificationResendStatus> {
+    return this.emailVerificationService.getResendStatus(userId);
   }
 
   async verifyAccessToken(token: string): Promise<JwtPayload> {

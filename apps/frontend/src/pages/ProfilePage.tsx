@@ -1,3 +1,4 @@
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import {
   Alert,
   Box,
@@ -14,6 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -53,6 +55,7 @@ export function ProfilePage() {
   const [mfaEnableCode, setMfaEnableCode] = useState('');
   const [disablePassword, setDisablePassword] = useState('');
   const [disableMfaCode, setDisableMfaCode] = useState('');
+  const [showDisableMfaForm, setShowDisableMfaForm] = useState(false);
   const [isSettingUpMfa, setIsSettingUpMfa] = useState(false);
   const [isEnablingMfa, setIsEnablingMfa] = useState(false);
   const [isDisablingMfa, setIsDisablingMfa] = useState(false);
@@ -170,6 +173,15 @@ export function ProfilePage() {
     }
   }
 
+  async function handleCopyMfaSecret() {
+    if (!mfaSetup) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(mfaSetup.secret);
+    setToast('Setup key copied');
+  }
+
   async function handleBeginMfaSetup() {
     setIsSettingUpMfa(true);
     setError(null);
@@ -212,6 +224,12 @@ export function ProfilePage() {
     }
   }
 
+  function closeDisableMfaForm() {
+    setShowDisableMfaForm(false);
+    setDisablePassword('');
+    setDisableMfaCode('');
+  }
+
   async function handleDisableMfa(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsDisablingMfa(true);
@@ -223,6 +241,7 @@ export function ProfilePage() {
       setUser(profile);
       setDisablePassword('');
       setDisableMfaCode('');
+      setShowDisableMfaForm(false);
       setToast('Multi-factor authentication disabled');
     } catch (caughtError) {
       setError(
@@ -267,14 +286,16 @@ export function ProfilePage() {
         </Alert>
       ) : null}
 
-      <Paper className="surface-card profile-panel" elevation={0}>
-        {isLoading ? (
+      {isLoading ? (
+        <Paper className="surface-card profile-panel" elevation={0}>
           <Box className="state-panel">
             <CircularProgress size={28} />
             <Typography color="text.secondary">Loading profile...</Typography>
           </Box>
-        ) : (
-          <Stack spacing={4}>
+        </Paper>
+      ) : (
+        <Stack className="profile-stack" spacing={3}>
+          <Paper className="surface-card profile-panel" elevation={0}>
             <Box component="form" onSubmit={handleSubmit}>
               <Stack spacing={2.5}>
                 <Typography component="h2" variant="h6">
@@ -303,7 +324,9 @@ export function ProfilePage() {
                 </Box>
               </Stack>
             </Box>
+          </Paper>
 
+          <Paper className="surface-card profile-panel" elevation={0}>
             <Box component="form" onSubmit={handlePasswordChange}>
               <Stack spacing={2.5}>
                 <Typography component="h2" variant="h6">
@@ -339,7 +362,9 @@ export function ProfilePage() {
                 </Box>
               </Stack>
             </Box>
+          </Paper>
 
+          <Paper className="surface-card profile-panel" elevation={0}>
             <Stack spacing={2.5}>
               <Typography component="h2" variant="h6">
                 Multi-factor authentication
@@ -351,67 +376,118 @@ export function ProfilePage() {
               </Typography>
 
               {user?.mfaEnabled ? (
-                <Box component="form" onSubmit={handleDisableMfa}>
-                  <Stack spacing={2}>
-                    <TextField
-                      autoComplete="current-password"
-                      fullWidth
-                      label="Current password"
-                      onChange={(event) => setDisablePassword(event.target.value)}
-                      required
-                      type="password"
-                      value={disablePassword}
-                    />
-                    <TextField
-                      fullWidth
-                      label="Authenticator code"
-                      onChange={(event) =>
-                        setDisableMfaCode(event.target.value.trim())
-                      }
-                      required
-                      slotProps={{
-                        htmlInput: {
-                          inputMode: 'numeric',
-                          pattern: '[0-9]*',
-                          maxLength: 6,
-                        },
-                      }}
-                      value={disableMfaCode}
-                    />
+                showDisableMfaForm ? (
+                  <Box component="form" onSubmit={handleDisableMfa}>
+                    <Stack spacing={2}>
+                      <Alert severity="warning">
+                        Confirm your password and a current authenticator code to
+                        turn off MFA. After that, sign-in will only require your
+                        password.
+                      </Alert>
+                      <TextField
+                        autoComplete="current-password"
+                        autoFocus
+                        fullWidth
+                        label="Current password"
+                        onChange={(event) =>
+                          setDisablePassword(event.target.value)
+                        }
+                        required
+                        type="password"
+                        value={disablePassword}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Authenticator code"
+                        onChange={(event) =>
+                          setDisableMfaCode(event.target.value.trim())
+                        }
+                        required
+                        slotProps={{
+                          htmlInput: {
+                            inputMode: 'numeric',
+                            pattern: '[0-9]*',
+                            maxLength: 6,
+                          },
+                        }}
+                        value={disableMfaCode}
+                      />
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                        <Button
+                          color="warning"
+                          disabled={isDisablingMfa}
+                          type="submit"
+                          variant="contained"
+                        >
+                          {isDisablingMfa ? 'Disabling...' : 'Disable MFA'}
+                        </Button>
+                        <Button
+                          disabled={isDisablingMfa}
+                          onClick={closeDisableMfaForm}
+                          type="button"
+                        >
+                          Cancel
+                        </Button>
+                      </Stack>
+                    </Stack>
+                  </Box>
+                ) : (
+                  <Stack spacing={1.5}>
+                    <Typography color="text.secondary" variant="body2">
+                      Authenticator app protection is enabled on this account.
+                    </Typography>
                     <Box>
                       <Button
                         color="warning"
-                        disabled={isDisablingMfa}
-                        type="submit"
+                        onClick={() => setShowDisableMfaForm(true)}
                         variant="outlined"
                       >
-                        {isDisablingMfa ? 'Disabling...' : 'Disable MFA'}
+                        Disable MFA
                       </Button>
                     </Box>
                   </Stack>
-                </Box>
+                )
               ) : mfaSetup ? (
                 <Box component="form" onSubmit={handleEnableMfa}>
-                  <Stack spacing={2}>
+                  <Stack spacing={2.5}>
                     <Alert severity="info">
-                      Add this account to Google Authenticator, 1Password, or
-                      another TOTP app using the secret below or the setup link.
+                      Scan the QR code with Google Authenticator, 1Password, or
+                      another authenticator app on your phone.
                     </Alert>
-                    <TextField
-                      fullWidth
-                      label="Setup secret"
-                      slotProps={{ htmlInput: { readOnly: true } }}
-                      value={mfaSetup.secret}
-                    />
-                    <Button
-                      component="a"
-                      href={mfaSetup.otpauthUrl}
-                      rel="noreferrer"
-                      target="_blank"
-                      variant="outlined"
+                    <Box className="mfa-qr-panel">
+                      <QRCodeSVG
+                        aria-label="MFA setup QR code"
+                        size={200}
+                        title="Scan to set up multi-factor authentication"
+                        value={mfaSetup.otpauthUrl}
+                      />
+                    </Box>
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      spacing={1.5}
+                      sx={{ justifyContent: 'center' }}
                     >
-                      Open in authenticator app
-                    </Button>
+                      <Button
+                        onClick={handleCopyMfaSecret}
+                        startIcon={<ContentCopyIcon fontSize="small" />}
+                        variant="outlined"
+                      >
+                        Copy setup key
+                      </Button>
+                      <Button
+                        component="a"
+                        href={mfaSetup.otpauthUrl}
+                        rel="noreferrer"
+                        target="_blank"
+                        variant="outlined"
+                      >
+                        Open in authenticator app
+                      </Button>
+                    </Stack>
+                    <Typography color="text.secondary" variant="body2">
+                      After scanning, enter the 6-digit code from your app to
+                      finish setup.
+                    </Typography>
                     <TextField
                       autoFocus
                       fullWidth
@@ -458,7 +534,9 @@ export function ProfilePage() {
                 </Button>
               )}
             </Stack>
+          </Paper>
 
+          <Paper className="surface-card profile-panel" elevation={0}>
             <Stack spacing={1.5}>
               <Typography component="h2" variant="h6">
                 Data and account
@@ -481,9 +559,9 @@ export function ProfilePage() {
                 </Button>
               </Stack>
             </Stack>
-          </Stack>
-        )}
-      </Paper>
+          </Paper>
+        </Stack>
+      )}
 
       <Dialog onClose={() => setDeleteDialogOpen(false)} open={deleteDialogOpen}>
         <DialogTitle>Delete your account?</DialogTitle>

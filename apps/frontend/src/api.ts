@@ -6,6 +6,7 @@ import type {
   MfaSetupResponse,
   ShortUrlConflictErrorBody,
   ShortUrlResponse,
+  VerificationResendStatus,
 } from '@url-shortener/shared';
 
 function normalizeBaseUrl(baseUrl: string): string {
@@ -23,7 +24,7 @@ const PUBLIC_BASE_URL = normalizeBaseUrl(
 export type AuthUser = AuthenticatedUser;
 export type ShortLink = ShortUrlResponse;
 export type ApiKey = ApiKeySummary;
-export type { AuthResponse, ShortUrlResponse, CreateApiKeyResponse };
+export type { AuthResponse, ShortUrlResponse, CreateApiKeyResponse, VerificationResendStatus };
 
 export class ApiError extends Error {
   readonly status: number;
@@ -128,10 +129,14 @@ export function verifyEmail(otp: string): Promise<AuthenticatedUser> {
   });
 }
 
-export function resendVerificationEmail(): Promise<void> {
-  return request<void>('/auth/resend-verification', {
+export function resendVerificationEmail(): Promise<VerificationResendStatus> {
+  return request<VerificationResendStatus>('/auth/resend-verification', {
     method: 'POST',
   });
+}
+
+export function getVerificationResendStatus(): Promise<VerificationResendStatus> {
+  return request<VerificationResendStatus>('/auth/verification-resend-status');
 }
 
 export function getProfile(): Promise<AuthenticatedUser> {

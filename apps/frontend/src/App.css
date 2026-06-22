@@ -286,9 +286,21 @@ a {
   height: 100%;
 }
 
+.profile-stack {
+  max-width: 560px;
+}
+
 .profile-panel {
   padding: 28px;
-  max-width: 560px;
+}
+
+.mfa-qr-panel {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
 }
 
 .turnstile-box {

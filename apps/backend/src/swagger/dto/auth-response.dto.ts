@@ -43,3 +43,11 @@ export class MfaSetupResponseDto {
   })
   otpauthUrl: string;
 }
+
+export class VerificationResendStatusDto {
+  @ApiProperty({ example: 45 })
+  resendAvailableInSeconds: number;
+
+  @ApiProperty({ example: 4 })
+  resendsRemaining: number;
+}
